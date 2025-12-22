@@ -4,6 +4,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Play, Info, Plus, Search, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import {
+  AdsterraBanner,
+  AdsterraNativeBanner,
+  AdsterraSocialBar,
+  AdsterraPopunder,
+  AdsterraSmartlink,
+  AdContainer
+} from '@/components/ads/AdsterraAds';
 
 // Types
 interface Category {
@@ -288,7 +296,7 @@ export default function App() {
   }, []);
 
   const handlePlay = (streaming: Streaming) => {
-    router.push(`/play/${streaming.id}`);
+    router.push(`/play/${streaming.slug}`);
   };
 
   // Group streamings by category
@@ -309,7 +317,18 @@ export default function App() {
       <Navbar scrolled={scrolled} />
       <Hero streaming={heroStreaming} onPlay={handlePlay} />
 
+      {/* Popunder & Smartlink */}
+      <AdsterraPopunder />
+      <AdsterraSmartlink />
+
       <div className="-mt-32 relative z-10">
+        {/* Banner Ad after Hero */}
+        <div className="px-4 md:px-12 mb-6">
+          <AdContainer>
+            <AdsterraBanner />
+          </AdContainer>
+        </div>
+
         {/* Popular */}
         <StreamingRow
           title="🔥 Populer di AuraTV"
@@ -317,17 +336,33 @@ export default function App() {
           onPlay={handlePlay}
         />
 
+        {/* Native Banner Ad #1 */}
+        <div className="px-4 md:px-12 my-6">
+          <AdContainer>
+            <AdsterraNativeBanner />
+          </AdContainer>
+        </div>
+
         {/* By Category */}
-        {categories.map(cat => {
+        {categories.map((cat, index) => {
           const catStreamings = getStreamingsByCategory(cat.slug);
           if (catStreamings.length === 0) return null;
           return (
-            <StreamingRow
-              key={cat.id}
-              title={`${cat.icon_url || '📁'} ${cat.name}`}
-              streamings={catStreamings}
-              onPlay={handlePlay}
-            />
+            <React.Fragment key={cat.id}>
+              <StreamingRow
+                title={`${cat.icon_url || '📁'} ${cat.name}`}
+                streamings={catStreamings}
+                onPlay={handlePlay}
+              />
+              {/* Native Banner every 2 categories */}
+              {index % 2 === 1 && (
+                <div className="px-4 md:px-12 my-6">
+                  <AdContainer>
+                    <AdsterraNativeBanner />
+                  </AdContainer>
+                </div>
+              )}
+            </React.Fragment>
           );
         })}
 
@@ -340,6 +375,9 @@ export default function App() {
       </div>
 
       <Footer />
+
+      {/* Social Bar (sticky bottom) */}
+      <AdsterraSocialBar />
     </div>
   );
 }

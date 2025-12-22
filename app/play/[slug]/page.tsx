@@ -10,6 +10,7 @@ import { createClient } from '@/lib/supabase/client';
 
 interface Streaming {
     id: string;
+    id_category: string;
     name: string;
     slug: string;
     description: string | null;
@@ -18,20 +19,22 @@ interface Streaming {
     category?: { name: string; slug: string };
 }
 
+
 interface Playlist {
     id: string;
     url_streaming: string;
     type_streaming: 'mp4' | 'm3u8' | 'ts';
+    name_server?: string;
     status: string;
 }
 
 const supabase = createClient();
 
-async function getStreaming(id: string): Promise<Streaming | null> {
+async function getStreamingBySlug(slug: string): Promise<Streaming | null> {
     const { data, error } = await supabase
         .from('streaming')
         .select('*, category:id_category(name, slug)')
-        .eq('id', id)
+        .eq('slug', slug)
         .single();
     if (error) return null;
     return data;
@@ -47,12 +50,42 @@ async function getPlaylist(streamingId: string): Promise<Playlist[]> {
     return data || [];
 }
 
-async function getRelatedStreamings(categorySlug: string, excludeId: string): Promise<Streaming[]> {
+// Get same channel (same category)
+async function getSameChannel(categoryId: string, excludeId: string): Promise<Streaming[]> {
+    const { data, error } = await supabase
+        .from('streaming')
+        .select('*, category:id_category(name, slug)')
+        .eq('status', 'Active')
+        .eq('id_category', categoryId)
+        .neq('id', excludeId)
+        .limit(6);
+    if (error) {
+        console.error('Error fetching same channel:', error);
+        return [];
+    }
+    return (data || []).sort(() => Math.random() - 0.5); // Randomize
+}
+
+// Get recommendations (random active streaming)
+async function getRecommendations(excludeId: string): Promise<Streaming[]> {
     const { data, error } = await supabase
         .from('streaming')
         .select('*, category:id_category(name, slug)')
         .eq('status', 'Active')
         .neq('id', excludeId)
+        .limit(12);
+    if (error) return [];
+    return (data || []).sort(() => Math.random() - 0.5).slice(0, 6); // Random 6 items
+}
+
+// Get trending (most viewed)
+async function getTrending(excludeId: string): Promise<Streaming[]> {
+    const { data, error } = await supabase
+        .from('streaming')
+        .select('*, category:id_category(name, slug)')
+        .eq('status', 'Active')
+        .neq('id', excludeId)
+        .order('view_count', { ascending: false })
         .limit(6);
     if (error) return [];
     return data || [];
@@ -84,7 +117,7 @@ const formatTime = (seconds: number) => {
 export default function PlayPage() {
     const params = useParams();
     const router = useRouter();
-    const streamingId = params.id as string;
+    const streamingSlug = params.slug as string;
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
@@ -92,7 +125,9 @@ export default function PlayPage() {
 
     const [streaming, setStreaming] = useState<Streaming | null>(null);
     const [playlist, setPlaylist] = useState<Playlist[]>([]);
-    const [related, setRelated] = useState<Streaming[]>([]);
+    const [sameChannel, setSameChannel] = useState<Streaming[]>([]);
+    const [recommendations, setRecommendations] = useState<Streaming[]>([]);
+    const [trending, setTrending] = useState<Streaming[]>([]);
     const [loading, setLoading] = useState(true);
 
     const [isPlaying, setIsPlaying] = useState(false);
@@ -104,22 +139,35 @@ export default function PlayPage() {
     const [showControls, setShowControls] = useState(true);
     const [showSettings, setShowSettings] = useState(false);
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
+    const [selectedPlaylistIndex, setSelectedPlaylistIndex] = useState(0);
 
     useEffect(() => {
         async function fetchData() {
             try {
                 setLoading(true);
-                const streamingData = await getStreaming(streamingId);
+                const streamingData = await getStreamingBySlug(streamingSlug);
                 if (streamingData) {
                     setStreaming(streamingData);
-                    incrementViewCount(streamingId);
+                    incrementViewCount(streamingData.id);
 
-                    const [playlistData, relatedData] = await Promise.all([
-                        getPlaylist(streamingId),
-                        getRelatedStreamings(streamingData.category?.slug || '', streamingId)
+                    const [playlistData, sameChannelData, recommendationsData, trendingData] = await Promise.all([
+                        getPlaylist(streamingData.id),
+                        getSameChannel(streamingData.id_category, streamingData.id),
+                        getRecommendations(streamingData.id),
+                        getTrending(streamingData.id)
                     ]);
+
+                    console.log('Fetched data:', {
+                        playlist: playlistData.length,
+                        sameChannel: sameChannelData.length,
+                        recommendations: recommendationsData.length,
+                        trending: trendingData.length
+                    });
+
                     setPlaylist(playlistData);
-                    setRelated(relatedData);
+                    setSameChannel(sameChannelData);
+                    setRecommendations(recommendationsData);
+                    setTrending(trendingData);
                 }
             } catch (err) {
                 console.error('Error:', err);
@@ -128,7 +176,7 @@ export default function PlayPage() {
             }
         }
         fetchData();
-    }, [streamingId]);
+    }, [streamingSlug]);
 
     const handleMouseMove = useCallback(() => {
         setShowControls(true);
@@ -232,7 +280,7 @@ export default function PlayPage() {
         );
     }
 
-    const videoUrl = playlist[0]?.url_streaming || '';
+    const videoUrl = playlist[selectedPlaylistIndex]?.url_streaming || '';
 
     return (
         <div className="min-h-screen bg-black">
@@ -253,6 +301,10 @@ export default function PlayPage() {
                         onLoadedMetadata={() => videoRef.current && setDuration(videoRef.current.duration)}
                         onEnded={() => setIsPlaying(false)}
                         onClick={togglePlay}
+                        onError={(e) => {
+                            console.error('Video error:', e);
+                            // Silently handle video errors
+                        }}
                     />
                 ) : (
                     <div className="w-full h-full flex items-center justify-center">
@@ -269,7 +321,7 @@ export default function PlayPage() {
                     {/* Top Bar */}
                     <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent">
                         <div className="flex items-center justify-between">
-                            <button onClick={() => router.back()} className="flex items-center gap-2 text-white hover:text-gray-300">
+                            <button onClick={() => router.push('/')} className="flex items-center gap-2 text-white hover:text-gray-300">
                                 <ArrowLeft className="w-6 h-6" />
                                 <span className="hidden sm:inline">Kembali</span>
                             </button>
@@ -364,7 +416,8 @@ export default function PlayPage() {
 
             {/* Info Section */}
             <div className="max-w-6xl mx-auto px-4 py-8">
-                <div className="flex flex-col md:flex-row gap-8">
+                <div className="flex flex-col lg:flex-row gap-8">
+                    {/* Main Info */}
                     <div className="flex-1">
                         <h1 className="text-3xl font-bold text-white mb-2">{streaming.name}</h1>
                         <div className="flex items-center gap-4 text-gray-400 text-sm mb-4">
@@ -387,24 +440,124 @@ export default function PlayPage() {
                             </button>
                         </div>
                     </div>
+
+                    {/* Playlist Sidebar */}
+                    {playlist.length > 0 && (
+                        <div className="lg:w-80">
+                            <div className="bg-zinc-900 rounded-lg border border-zinc-800 overflow-hidden">
+                                <div className="p-4 border-b border-zinc-800">
+                                    <h3 className="text-white font-semibold flex items-center gap-2">
+                                        <List className="w-5 h-5" />
+                                        Pilih Kualitas
+                                    </h3>
+                                    <p className="text-gray-400 text-xs mt-1">{playlist.length} opsi tersedia</p>
+                                </div>
+                                <div className="max-h-96 overflow-y-auto">
+                                    {playlist.map((item, index) => (
+                                        <button
+                                            key={item.id}
+                                            onClick={() => {
+                                                setSelectedPlaylistIndex(index);
+                                                if (videoRef.current) {
+                                                    videoRef.current.src = item.url_streaming;
+                                                    videoRef.current.load();
+                                                    if (isPlaying) videoRef.current.play();
+                                                }
+                                            }}
+                                            className={`w-full p-4 text-left border-b border-zinc-800 hover:bg-zinc-800 transition ${selectedPlaylistIndex === index ? 'bg-zinc-800' : ''
+                                                }`}
+                                        >
+                                            <div className="flex items-center justify-between">
+                                                <p className="text-white font-medium">
+                                                    {item.name_server || `Server ${index + 1}`}
+                                                </p>
+                                                {selectedPlaylistIndex === index && (
+                                                    <div className="w-2 h-2 bg-red-600 rounded-full ml-2"></div>
+                                                )}
+                                            </div>
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
-                {/* Related */}
-                {related.length > 0 && (
-                    <div className="mt-12">
-                        <h2 className="text-xl font-bold text-white mb-4">Rekomendasi Lainnya</h2>
+                {/* Channel yang Sama */}
+                <div className="mt-12">
+                    <h2 className="text-xl font-bold text-white mb-4">Channel yang Sama</h2>
+                    {sameChannel.length > 0 ? (
                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                            {related.map(r => (
-                                <div key={r.id} onClick={() => router.push(`/play/${r.id}`)} className="cursor-pointer group">
+                            {sameChannel.map(s => (
+                                <div key={s.id} onClick={() => router.push(`/play/${s.slug}`)} className="cursor-pointer group">
+                                    <div className="aspect-video rounded-lg overflow-hidden bg-zinc-800">
+                                        <img src={s.url_banner || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400'} alt={s.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                                    </div>
+                                    <p className="text-white text-sm mt-2 line-clamp-1">{s.name}</p>
+                                    <p className="text-gray-400 text-xs">{s.category?.name}</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 bg-zinc-900 rounded-lg border border-zinc-800">
+                            <p className="text-gray-400">Tidak ada streaming lain di channel ini</p>
+                            <p className="text-gray-500 text-sm mt-1">Tambahkan streaming di admin panel</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Rekomendasi */}
+                <div className="mt-12">
+                    <h2 className="text-xl font-bold text-white mb-4">Rekomendasi</h2>
+                    {recommendations.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {recommendations.map(r => (
+                                <div key={r.id} onClick={() => router.push(`/play/${r.slug}`)} className="cursor-pointer group">
                                     <div className="aspect-video rounded-lg overflow-hidden bg-zinc-800">
                                         <img src={r.url_banner || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400'} alt={r.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
                                     </div>
                                     <p className="text-white text-sm mt-2 line-clamp-1">{r.name}</p>
+                                    <p className="text-gray-400 text-xs">{r.category?.name}</p>
                                 </div>
                             ))}
                         </div>
+                    ) : (
+                        <div className="text-center py-8 bg-zinc-900 rounded-lg border border-zinc-800">
+                            <p className="text-gray-400">Belum ada rekomendasi</p>
+                            <p className="text-gray-500 text-sm mt-1">Tambahkan lebih banyak streaming untuk rekomendasi</p>
+                        </div>
+                    )}
+                </div>
+
+                {/* Trending */}
+                <div className="mt-12">
+                    <div className="flex items-center gap-2 mb-4">
+                        <h2 className="text-xl font-bold text-white">Trending</h2>
+                        <span className="text-red-500">🔥</span>
                     </div>
-                )}
+                    {trending.length > 0 ? (
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+                            {trending.map((t, index) => (
+                                <div key={t.id} onClick={() => router.push(`/play/${t.slug}`)} className="cursor-pointer group relative">
+                                    <div className="aspect-video rounded-lg overflow-hidden bg-zinc-800 relative">
+                                        <img src={t.url_banner || 'https://images.unsplash.com/photo-1536440136628-849c177e76a1?w=400'} alt={t.name} className="w-full h-full object-cover group-hover:scale-105 transition" />
+                                        {/* Badge ranking */}
+                                        <div className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">
+                                            #{index + 1}
+                                        </div>
+                                    </div>
+                                    <p className="text-white text-sm mt-2 line-clamp-1">{t.name}</p>
+                                    <p className="text-gray-400 text-xs">{t.view_count.toLocaleString()} views</p>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="text-center py-8 bg-zinc-900 rounded-lg border border-zinc-800">
+                            <p className="text-gray-400">Belum ada trending</p>
+                            <p className="text-gray-500 text-sm mt-1">Streaming akan tampil berdasarkan jumlah views</p>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

@@ -3,9 +3,12 @@ import crypto from 'crypto';
 /**
  * Generate signed URL untuk streaming yang expire
  * Prevents direct link sharing & sniffing
+ * 
+ * OPTIONAL: If SECRET_KEY not set, returns direct URL (development mode)
  */
 
-const SECRET_KEY = process.env.STREAMING_SECRET_KEY || 'your-super-secret-key-change-this';
+const SECRET_KEY = process.env.STREAMING_SECRET_KEY;
+const PROTECTION_ENABLED = !!SECRET_KEY;
 
 interface SignedUrlOptions {
     url: string;
@@ -15,9 +18,20 @@ interface SignedUrlOptions {
 }
 
 /**
+ * Check if protection is enabled
+ */
+export function isProtectionEnabled(): boolean {
+    return PROTECTION_ENABLED;
+}
+
+/**
  * Generate signed streaming URL
  */
 export function generateSignedUrl(options: SignedUrlOptions): string {
+    if (!SECRET_KEY) {
+        throw new Error('STREAMING_SECRET_KEY not configured');
+    }
+
     const {
         url,
         expiresIn = 3600, // 1 hour default
@@ -58,6 +72,10 @@ export function verifySignedUrl(token: string, currentIp?: string): {
     url?: string;
     error?: string;
 } {
+    if (!SECRET_KEY) {
+        return { valid: false, error: 'Server protection not configured' };
+    }
+
     try {
         // Decode token
         const decoded = JSON.parse(

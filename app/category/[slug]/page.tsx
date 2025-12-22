@@ -178,7 +178,7 @@ export default function CategoryPage() {
     }, [categorySlug]);
 
     const handlePlay = (streaming: Streaming) => {
-        router.push(`/play/${streaming.id}`);
+        router.push(`/play/${streaming.slug}`);
     };
 
     const sortedStreamings = [...streamings].sort((a, b) => {

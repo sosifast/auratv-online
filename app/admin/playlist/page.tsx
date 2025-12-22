@@ -9,6 +9,7 @@ interface Playlist {
     id_streaming: string;
     url_streaming: string;
     type_streaming: 'mp4' | 'm3u8' | 'ts';
+    name_server?: string;
     status: 'Active' | 'Not-Active';
     streaming?: {
         name: string;
@@ -35,6 +36,7 @@ export default function PlaylistPage() {
         id_streaming: '',
         url_streaming: '',
         type_streaming: 'mp4' as 'mp4' | 'm3u8' | 'ts',
+        name_server: '',
         status: 'Active' as 'Active' | 'Not-Active'
     });
 
@@ -114,6 +116,7 @@ export default function PlaylistPage() {
             id_streaming: playlist.id_streaming,
             url_streaming: playlist.url_streaming,
             type_streaming: playlist.type_streaming,
+            name_server: playlist.name_server || '',
             status: playlist.status
         });
         setShowModal(true);
@@ -142,6 +145,7 @@ export default function PlaylistPage() {
             id_streaming: '',
             url_streaming: '',
             type_streaming: 'mp4',
+            name_server: '',
             status: 'Active'
         });
         setEditingId(null);
@@ -272,16 +276,16 @@ export default function PlaylistPage() {
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-1 rounded text-xs font-medium ${playlist.type_streaming === 'mp4' ? 'bg-blue-500/20 text-blue-400' :
-                                                    playlist.type_streaming === 'm3u8' ? 'bg-purple-500/20 text-purple-400' :
-                                                        'bg-gray-500/20 text-gray-400'
+                                                playlist.type_streaming === 'm3u8' ? 'bg-purple-500/20 text-purple-400' :
+                                                    'bg-gray-500/20 text-gray-400'
                                                 }`}>
                                                 {playlist.type_streaming.toUpperCase()}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <span className={`px-2 py-1 rounded text-xs font-medium ${playlist.status === 'Active'
-                                                    ? 'bg-green-500/20 text-green-400'
-                                                    : 'bg-red-500/20 text-red-400'
+                                                ? 'bg-green-500/20 text-green-400'
+                                                : 'bg-red-500/20 text-red-400'
                                                 }`}>
                                                 {playlist.status}
                                             </span>
@@ -369,6 +373,23 @@ export default function PlaylistPage() {
                                     <option value="m3u8">M3U8 (HLS)</option>
                                     <option value="ts">TS (Transport Stream)</option>
                                 </select>
+                            </div>
+
+                            {/* Name Server */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                    Nama Server
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.name_server}
+                                    onChange={(e) => setFormData({ ...formData, name_server: e.target.value })}
+                                    placeholder="Server 1, Cloudflare CDN, Google Drive, etc."
+                                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                                />
+                                <p className="text-xs text-gray-500 mt-1">
+                                    Opsional: Nama server/sumber streaming untuk memudahkan identifikasi
+                                </p>
                             </div>
 
                             {/* Status */}
