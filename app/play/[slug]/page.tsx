@@ -639,6 +639,9 @@ export default function PlayPage() {
                     )}
                 </div>
             </div>
+
+            {/* Social Bar (sticky bottom) */}
+            <AdsterraSocialBar placement="play" />
         </div>
     );
 }

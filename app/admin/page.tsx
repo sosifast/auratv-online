@@ -37,7 +37,7 @@ async function getDashboardStats(): Promise<DashboardStats> {
     ]);
 
     const totalStreaming = streamingRes.data?.length || 0;
-    const totalViews = streamingRes.data?.reduce((sum, s) => sum + (s.view_count || 0), 0) || 0;
+    const totalViews = (streamingRes.data as { view_count: number }[])?.reduce((sum: number, s) => sum + (s.view_count || 0), 0) || 0;
     const totalUsers = usersRes.data?.length || 0;
     const totalCategories = categoriesRes.data?.length || 0;
 

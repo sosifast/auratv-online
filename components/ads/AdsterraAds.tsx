@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 
 /**
@@ -38,7 +38,7 @@ async function getAdsConfig(): Promise<AdConfig[]> {
         console.log('✅ RAW data from database:', data);
 
         // Filter enabled ads
-        const enabledAds = (data || []).filter(ad => ad.is_enabled === true);
+        const enabledAds = (data as AdConfig[] || []).filter((ad: AdConfig) => ad.is_enabled === true);
         console.log('✅ Enabled ads after filter:', enabledAds);
 
         adsConfigCache = enabledAds;
@@ -106,44 +106,119 @@ export function clearAdsCache() {
 
 // Generic Ad Component
 function AdComponent({ type, placement }: { type: string; placement: string }) {
-    const [adHtml, setAdHtml] = useState<string>('');
+    const [config, setConfig] = useState<AdConfig | null>(null);
     const [loading, setLoading] = useState(true);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const [scriptError, setScriptError] = useState(false);
+
+    // Reserved heights for common ad types to prevent CLS
+    const minHeight = type === 'banner' ? '90px' : type === 'native' ? '250px' : '0px';
 
     useEffect(() => {
+        let isMounted = true;
         async function loadAd() {
-            console.log(`🚀 Loading ad: type=${type}, placement=${placement}`);
-            setLoading(true);
-
-            const config = await getAdByType(type, placement);
-
-            if (config?.ad_script) {
-                const cleanScript = config.ad_script.trim();
-                console.log(`✅ Setting ad HTML for ${type}:`, cleanScript.substring(0, 100) + '...');
-                setAdHtml(cleanScript);
-            } else {
-                console.log(`⚠️ No ad script found for ${type} on ${placement}`);
+            try {
+                // Clear previous state
+                setLoading(true);
+                setScriptError(false);
+                const adConfig = await getAdByType(type, placement);
+                if (isMounted) {
+                    setConfig(adConfig);
+                    setLoading(false);
+                }
+            } catch (err) {
+                console.error(`❌ Error loading ad config for ${type}:`, err);
+                if (isMounted) setLoading(false);
             }
-
-            setLoading(false);
         }
         loadAd();
+        return () => { isMounted = false; };
     }, [type, placement]);
 
+    useEffect(() => {
+        if (!config?.ad_script || !containerRef.current) return;
+
+        // Use a data attribute to prevent double-injection in Dev mode
+        if (containerRef.current.dataset.lastScript === btoa(config.ad_script.substring(0, 100))) {
+            return;
+        }
+        containerRef.current.dataset.lastScript = btoa(config.ad_script.substring(0, 100));
+
+        console.log(`🎬 Injecting ${type} ad for ${placement}`);
+
+        // Clear previous content
+        containerRef.current.innerHTML = '';
+
+        try {
+            // Using Range handles script execution better in some contexts
+            const range = document.createRange();
+            range.selectNode(containerRef.current);
+            const fragment = range.createContextualFragment(config.ad_script);
+
+            // Extract scripts so we can execute them manually and reliably
+            const scripts = Array.from(fragment.querySelectorAll('script'));
+            scripts.forEach(s => s.remove()); // Remove from fragment
+
+            // Append non-script elements
+            containerRef.current.appendChild(fragment);
+
+            // Execute scripts in order
+            scripts.forEach((oldScript) => {
+                const newScript = document.createElement('script');
+
+                // Copy all attributes
+                Array.from(oldScript.attributes).forEach(attr => {
+                    newScript.setAttribute(attr.name, attr.value);
+                });
+
+                if (oldScript.src) {
+                    newScript.src = oldScript.src;
+                } else {
+                    newScript.textContent = oldScript.textContent;
+
+                    // Special handling for atOptions to ensure global availability
+                    if (oldScript.textContent?.includes('atOptions')) {
+                        try {
+                            const evalFn = new Function(oldScript.textContent);
+                            evalFn();
+                        } catch (e) {
+                            console.warn("atOptions eval failed:", e);
+                        }
+                    }
+                }
+
+                // Append to container to run
+                containerRef.current?.appendChild(newScript);
+            });
+
+            console.log(`✅ ${type} ad injected successfully`);
+        } catch (err) {
+            console.error(`❌ Error injecting ${type} ad:`, err);
+            setScriptError(true);
+        }
+    }, [config, type, placement]);
+
     if (loading) {
-        console.log(`⏳ ${type} ad still loading...`);
+        return (
+            <div
+                style={{ minHeight }}
+                className="w-full flex flex-col items-center justify-center bg-zinc-900/10 rounded-lg border border-zinc-800/20"
+            >
+                <div className="w-8 h-8 border-2 border-red-600/30 border-t-red-600 rounded-full animate-spin"></div>
+            </div>
+        );
     }
 
-    if (!adHtml) {
-        console.log(`❌ ${type} ad - no HTML to render`);
+    if (!config || scriptError) {
         return null;
     }
 
-    console.log(`🎨 Rendering ${type} ad with ${adHtml.length} characters`);
-
     return (
         <div
-            className="adsterra-ad"
-            dangerouslySetInnerHTML={{ __html: adHtml }}
+            ref={containerRef}
+            className={`adsterra-ad adsterra-${type} w-full flex justify-center`}
+            id={`adsterra-container-${type}-${placement}`}
+            style={{ minHeight }}
         />
     );
 }
@@ -176,9 +251,21 @@ export function AdsterraSmartlink({ placement = 'homepage' }: { placement?: stri
 // Ad Container Wrapper
 export function AdContainer({ children, className = '' }: { children: React.ReactNode; className?: string }) {
     return (
-        <div className={`ad-container bg-zinc-800/30 rounded-lg p-4 my-6 ${className}`}>
-            <p className="text-gray-500 text-xs text-center mb-2">Advertisement</p>
-            {children}
+        <div className={`ad-container bg-zinc-900/40 backdrop-blur-md border border-zinc-800/50 rounded-2xl p-6 my-8 shadow-2xl relative overflow-hidden group transition-all duration-500 hover:border-red-600/30 ${className}`}>
+            <div className="absolute top-0 left-0 w-1.5 h-full bg-gradient-to-b from-red-600 to-transparent opacity-30 group-hover:opacity-100 transition-opacity"></div>
+            <div className="absolute -top-12 -right-12 w-24 h-24 bg-red-600/5 blur-3xl rounded-full"></div>
+
+            <div className="flex items-center justify-center gap-2 mb-4 opacity-50 group-hover:opacity-80 transition-opacity">
+                <div className="h-[1px] w-8 bg-zinc-700"></div>
+                <p className="text-zinc-500 text-[9px] uppercase tracking-[0.2em] font-bold text-center">
+                    Premium Sponsorship
+                </p>
+                <div className="h-[1px] w-8 bg-zinc-700"></div>
+            </div>
+
+            <div className="flex justify-center items-center w-full">
+                {children}
+            </div>
         </div>
     );
 }

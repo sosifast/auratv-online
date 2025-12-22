@@ -10,9 +10,10 @@ import { verifySignedUrl } from '@/lib/utils/streaming-protection';
 
 export async function GET(
     request: NextRequest,
-    { params }: { params: { playlistId: string } }
+    props: { params: Promise<{ playlistId: string }> }
 ) {
     try {
+        const params = await props.params;
         const { playlistId } = params;
 
         // Get token from query params
@@ -41,7 +42,7 @@ export async function GET(
         }
 
         // Get playlist from database
-        const supabase = createClient();
+        const supabase = await createClient();
         const { data: playlist, error } = await supabase
             .from('streaming_playlist')
             .select('url_streaming, type_streaming, status')
@@ -65,7 +66,7 @@ export async function GET(
         ];
 
         const isValidReferer = referer && allowedDomains.some(domain =>
-            referer.includes(domain)
+            domain && referer.includes(domain)
         );
 
         if (!isValidReferer && process.env.NODE_ENV === 'production') {

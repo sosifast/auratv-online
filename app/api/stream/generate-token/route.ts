@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Get user from session (if authenticated)
-        const supabase = createClient();
+        const supabase = await createClient();
         let userId = 'anonymous';
 
         // Try to get user from localStorage (if you have auth)

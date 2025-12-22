@@ -4,6 +4,14 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Play, Plus, Info, Grid, List, ChevronDown, Search, Bell, Star } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import {
+    AdsterraBanner,
+    AdsterraNativeBanner,
+    AdsterraSocialBar,
+    AdsterraPopunder,
+    AdsterraSmartlink,
+    AdContainer
+} from '@/components/ads/AdsterraAds';
 
 interface Category {
     id: string;
@@ -320,13 +328,40 @@ export default function CategoryPage() {
                         <p className="text-gray-500 text-lg">Tidak ada streaming di kategori ini</p>
                     </div>
                 ) : (
-                    <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' : 'grid-cols-1'}`}>
-                        {sortedStreamings.map(s => (
-                            <MovieCard key={s.id} streaming={s} onPlay={handlePlay} />
-                        ))}
-                    </div>
+                    <>
+                        <div className={`grid gap-6 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' : 'grid-cols-1'}`}>
+                            {sortedStreamings.slice(0, 12).map(s => (
+                                <MovieCard key={s.id} streaming={s} onPlay={handlePlay} />
+                            ))}
+                        </div>
+
+                        {/* Native Ad inside results */}
+                        {sortedStreamings.length > 12 && (
+                            <AdContainer className="my-12">
+                                <AdsterraNativeBanner placement="category" />
+                            </AdContainer>
+                        )}
+
+                        <div className={`grid gap-6 mt-6 ${viewMode === 'grid' ? 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6' : 'grid-cols-1'}`}>
+                            {sortedStreamings.slice(12).map(s => (
+                                <MovieCard key={s.id} streaming={s} onPlay={handlePlay} />
+                            ))}
+                        </div>
+                    </>
                 )}
             </div>
+
+            {/* Bottom Banner */}
+            <div className="px-4 md:px-12 pb-12">
+                <AdContainer>
+                    <AdsterraBanner placement="category" />
+                </AdContainer>
+            </div>
+
+            {/* Popunder & Smartlink & SocialBar */}
+            <AdsterraPopunder placement="category" />
+            <AdsterraSmartlink placement="category" />
+            <AdsterraSocialBar placement="category" />
 
             {/* Footer */}
             <footer className="bg-zinc-950 text-gray-500 py-12 px-4 md:px-12 mt-12 border-t border-zinc-800">
