@@ -11,6 +11,7 @@ import {
     KeyRound,
     Send
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
@@ -24,36 +25,59 @@ export default function ForgotPasswordPage() {
         setError('');
         setIsLoading(true);
 
-        // Validation
-        if (!email) {
-            setError('Email harus diisi');
+        try {
+            // Validation
+            if (!email) {
+                setError('Email harus diisi');
+                setIsLoading(false);
+                return;
+            }
+
+            if (!email.includes('@')) {
+                setError('Format email tidak valid');
+                setIsLoading(false);
+                return;
+            }
+
+            const supabase = createClient();
+
+            // Cek apakah email terdaftar di database
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('email')
+                .eq('email', email)
+                .single();
+
+            if (userError || !userData) {
+                setError('Email tidak terdaftar di sistem');
+                setIsLoading(false);
+                return;
+            }
+
+            // Simulasi pengiriman email reset password
+            // Dalam production, gunakan Supabase Auth atau service email
+            await new Promise(resolve => setTimeout(resolve, 1500));
+
+            setSuccess(true);
+            setCountdown(60);
             setIsLoading(false);
-            return;
-        }
 
-        if (!email.includes('@')) {
-            setError('Format email tidak valid');
+            // Countdown timer
+            const interval = setInterval(() => {
+                setCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        return 0;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+
+        } catch (err: any) {
+            console.error('Reset password error:', err);
+            setError('Terjadi kesalahan. Silakan coba lagi.');
             setIsLoading(false);
-            return;
         }
-
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Demo success
-        setSuccess(true);
-        setCountdown(60);
-
-        // Countdown timer
-        const interval = setInterval(() => {
-            setCountdown(prev => {
-                if (prev <= 1) {
-                    clearInterval(interval);
-                    return 0;
-                }
-                return prev - 1;
-            });
-        }, 1000);
     };
 
     const handleResend = async () => {
@@ -192,8 +216,8 @@ export default function ForgotPasswordPage() {
                             onClick={handleResend}
                             disabled={countdown > 0 || isLoading}
                             className={`w-full py-3 rounded-xl font-medium transition-all flex items-center justify-center gap-2 ${countdown > 0
-                                    ? 'bg-zinc-800 text-gray-500 cursor-not-allowed'
-                                    : 'bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700'
+                                ? 'bg-zinc-800 text-gray-500 cursor-not-allowed'
+                                : 'bg-zinc-800 hover:bg-zinc-700 text-white border border-zinc-700'
                                 }`}
                         >
                             {isLoading ? (

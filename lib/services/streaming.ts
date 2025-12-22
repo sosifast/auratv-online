@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client';
 import type { Streaming, StreamingInsert, StreamingUpdate } from '@/lib/types/database';
+import { generateSlug, makeUniqueSlug } from '@/lib/utils/slug';
 
 const supabase = createClient();
 
@@ -29,9 +30,25 @@ export const streamingService = {
 
     // Create streaming
     async create(streaming: StreamingInsert) {
+        // Auto-generate slug from name if not provided
+        let slug = streaming.slug || generateSlug(streaming.name);
+
+        // Check if slug already exists
+        const { data: existing } = await supabase
+            .from('streaming')
+            .select('slug')
+            .eq('slug', slug);
+
+        // Make slug unique if needed
+        if (existing && existing.length > 0) {
+            const existingSlugs = existing.map((item: { slug: string }) => item.slug);
+            slug = makeUniqueSlug(slug, existingSlugs);
+        }
+
+        // Insert with generated slug
         const { data, error } = await supabase
             .from('streaming')
-            .insert(streaming)
+            .insert({ ...streaming, slug })
             .select()
             .single();
 

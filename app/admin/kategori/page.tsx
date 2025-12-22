@@ -3,9 +3,26 @@
 import React, { useState, useEffect } from 'react';
 import { categoryService } from '@/lib/services/category';
 import type { Category } from '@/lib/types/database';
+import { Smile } from 'lucide-react';
+
+// Predefined emoji collection untuk kategori
+const CATEGORY_EMOJIS = [
+    '🎬', '🎥', '📺', '🎭', '🎪', '🎨',
+    '🎮', '🎯', '🎲', '🎰', '🎳', '🎹',
+    '🏆', '⚽', '🏀', '🏈', '⚾', '🎾',
+    '🎬', '📽️', '🎞️', '📹', '📱', '💻',
+    '🌟', '⭐', '✨', '💫', '🔥', '❤️',
+    '👑', '🎯', '🎪', '🎨', '🎭', '🎬',
+    '📚', '📖', '📰', '📡', '📻', '📺',
+    '🌍', '🌎', '🌏', '🗺️', '🧭', '⛰️',
+    '🎃', '🎄', '🎆', '🎇', '🎉', '🎊',
+    '🔔', '🔕', '📢', '📣', '📯', '🔊',
+];
 
 export default function KategoriPage() {
     const [showModal, setShowModal] = useState(false);
+    const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+    const [selectedEmoji, setSelectedEmoji] = useState('');
     const [editData, setEditData] = useState<Category | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [categories, setCategories] = useState<Category[]>([]);
@@ -43,7 +60,6 @@ export default function KategoriPage() {
         const formData = new FormData(e.target as HTMLFormElement);
         const payload = {
             name: formData.get('name') as string,
-            slug: formData.get('slug') as string,
             icon_url: formData.get('icon_url') as string || null,
             status: formData.get('status') as 'Active' | 'Not-Active',
         };
@@ -75,6 +91,24 @@ export default function KategoriPage() {
         }
     };
 
+    const handleEmojiSelect = (emoji: string) => {
+        setSelectedEmoji(emoji);
+        setShowEmojiPicker(false);
+    };
+
+    const handleOpenModal = (data: Category | null = null) => {
+        setEditData(data);
+        setSelectedEmoji(data?.icon_url || '');
+        setShowModal(true);
+    };
+
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setEditData(null);
+        setSelectedEmoji('');
+        setShowEmojiPicker(false);
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -82,7 +116,7 @@ export default function KategoriPage() {
                     <h1 className="text-2xl font-bold text-white">Kategori</h1>
                     <p className="text-gray-400 mt-1">Kelola kategori streaming</p>
                 </div>
-                <button onClick={() => { setEditData(null); setShowModal(true); }}
+                <button onClick={() => handleOpenModal()}
                     className="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition">
                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -141,7 +175,7 @@ export default function KategoriPage() {
                                         </td>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center justify-end gap-2">
-                                                <button onClick={() => { setEditData(cat); setShowModal(true); }} className="p-2 text-gray-400 hover:text-white hover:bg-zinc-700 rounded-lg">
+                                                <button onClick={() => handleOpenModal(cat)} className="p-2 text-gray-400 hover:text-white hover:bg-zinc-700 rounded-lg">
                                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                 </button>
                                                 <button onClick={() => handleDelete(cat.id)} className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg">
@@ -159,25 +193,59 @@ export default function KategoriPage() {
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-                    <div className="absolute inset-0 bg-black/60" onClick={() => setShowModal(false)}></div>
+                    <div className="absolute inset-0 bg-black/60" onClick={handleCloseModal}></div>
                     <div className="relative bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-md">
                         <div className="flex items-center justify-between p-6 border-b border-zinc-800">
                             <h3 className="text-lg font-semibold text-white">{editData ? 'Edit' : 'Tambah'} Kategori</h3>
-                            <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-white">✕</button>
+                            <button onClick={handleCloseModal} className="text-gray-400 hover:text-white">✕</button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">Nama</label>
                                 <input type="text" name="name" defaultValue={editData?.name} required className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600" />
                             </div>
-                            <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Slug</label>
-                                <input type="text" name="slug" defaultValue={editData?.slug} required className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600" />
-                            </div>
-                            <div>
+
+                            {/* Emoji Picker */}
+                            <div className="relative">
                                 <label className="block text-sm font-medium text-gray-300 mb-2">Icon (Emoji)</label>
-                                <input type="text" name="icon_url" defaultValue={editData?.icon_url || ''} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600" placeholder="🎬" />
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        name="icon_url"
+                                        value={selectedEmoji}
+                                        onChange={(e) => setSelectedEmoji(e.target.value)}
+                                        className="flex-1 bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600 text-2xl"
+                                        placeholder="🎬"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                                        className="px-4 py-2.5 bg-zinc-700 hover:bg-zinc-600 border border-zinc-600 rounded-lg transition flex items-center gap-2"
+                                    >
+                                        <Smile className="w-5 h-5 text-white" />
+                                        <span className="text-white text-sm">Pilih</span>
+                                    </button>
+                                </div>
+
+                                {/* Emoji Picker Dropdown */}
+                                {showEmojiPicker && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-800 border border-zinc-700 rounded-lg p-4 shadow-xl z-10 max-h-64 overflow-y-auto">
+                                        <div className="grid grid-cols-6 gap-2">
+                                            {CATEGORY_EMOJIS.map((emoji, index) => (
+                                                <button
+                                                    key={index}
+                                                    type="button"
+                                                    onClick={() => handleEmojiSelect(emoji)}
+                                                    className="w-12 h-12 flex items-center justify-center text-2xl hover:bg-zinc-700 rounded-lg transition"
+                                                >
+                                                    {emoji}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>
                                 <select name="status" defaultValue={editData?.status || 'Active'} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600">
@@ -186,7 +254,7 @@ export default function KategoriPage() {
                                 </select>
                             </div>
                             <div className="flex gap-3 pt-4">
-                                <button type="button" onClick={() => setShowModal(false)} className="flex-1 px-4 py-2.5 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700">Batal</button>
+                                <button type="button" onClick={handleCloseModal} className="flex-1 px-4 py-2.5 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700">Batal</button>
                                 <button type="submit" disabled={saving} className="flex-1 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 flex items-center justify-center gap-2">
                                     {saving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>}
                                     {editData ? 'Update' : 'Simpan'}

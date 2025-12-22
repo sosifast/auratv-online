@@ -58,7 +58,7 @@ export interface CategoryInsert {
     id?: string;
     name: string;
     icon_url?: string | null;
-    slug: string;
+    slug?: string;
     status?: GeneralStatus;
     created_at?: string;
     updated_at?: string;
@@ -93,7 +93,7 @@ export interface Streaming {
 export interface StreamingInsert {
     id?: string;
     id_category: string;
-    slug: string;
+    slug?: string;
     name: string;
     description?: string | null;
     title_seo?: string | null;

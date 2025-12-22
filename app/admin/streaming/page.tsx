@@ -47,9 +47,10 @@ export default function StreamingPage() {
         const formData = new FormData(e.target as HTMLFormElement);
         const payload = {
             name: formData.get('name') as string,
-            slug: formData.get('slug') as string,
             id_category: formData.get('id_category') as string,
             description: formData.get('description') as string || null,
+            title_seo: formData.get('title_seo') as string || null,
+            desc_seo: formData.get('desc_seo') as string || null,
             url_banner: formData.get('url_banner') as string || null,
             status: formData.get('status') as 'Active' | 'Not-Active',
         };
@@ -170,10 +171,6 @@ export default function StreamingPage() {
                                 <input type="text" name="name" defaultValue={editData?.name} required className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600" />
                             </div>
                             <div>
-                                <label className="block text-sm font-medium text-gray-300 mb-2">Slug</label>
-                                <input type="text" name="slug" defaultValue={editData?.slug} required className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600" />
-                            </div>
-                            <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">Kategori</label>
                                 <select name="id_category" defaultValue={editData?.id_category || ''} required className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600">
                                     <option value="">Pilih Kategori</option>
@@ -184,11 +181,57 @@ export default function StreamingPage() {
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">Deskripsi</label>
-                                <textarea name="description" rows={3} defaultValue={editData?.description || ''} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600 resize-none" />
+                                <textarea name="description" rows={3} defaultValue={editData?.description || ''} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600 resize-none" placeholder="Deskripsi singkat untuk konten..." />
                             </div>
+
+                            {/* SEO Section */}
+                            <div className="pt-4 border-t border-zinc-700">
+                                <h4 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                                    <svg className="w-4 h-4 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                                    </svg>
+                                    SEO Optimization
+                                </h4>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                            SEO Title
+                                            <span className="text-gray-500 text-xs ml-2">(Opsional)</span>
+                                        </label>
+                                        <input
+                                            type="text"
+                                            name="title_seo"
+                                            defaultValue={editData?.title_seo || ''}
+                                            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600"
+                                            placeholder="Judul yang SEO-friendly (max 60 karakter)"
+                                            maxLength={60}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Digunakan untuk meta title di search engine</p>
+                                    </div>
+
+                                    <div>
+                                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                                            SEO Description
+                                            <span className="text-gray-500 text-xs ml-2">(Opsional)</span>
+                                        </label>
+                                        <textarea
+                                            name="desc_seo"
+                                            rows={3}
+                                            defaultValue={editData?.desc_seo || ''}
+                                            className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600 resize-none"
+                                            placeholder="Deskripsi meta untuk search engine (max 160 karakter)"
+                                            maxLength={160}
+                                        />
+                                        <p className="text-xs text-gray-500 mt-1">Muncul di hasil pencarian Google/Bing</p>
+                                    </div>
+                                </div>
+                            </div>
+
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">URL Banner</label>
                                 <input type="text" name="url_banner" defaultValue={editData?.url_banner || ''} className="w-full bg-zinc-800 border border-zinc-700 rounded-lg py-2.5 px-4 text-white focus:ring-2 focus:ring-red-600" placeholder="https://..." />
+                                <p className="text-xs text-gray-500 mt-1">URL gambar poster/thumbnail</p>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">Status</label>

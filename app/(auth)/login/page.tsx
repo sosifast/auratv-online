@@ -13,6 +13,7 @@ import {
     CheckCircle2,
     Chrome
 } from 'lucide-react';
+import { createClient } from '@/lib/supabase/client';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -30,33 +31,75 @@ export default function LoginPage() {
         setSuccess('');
         setIsLoading(true);
 
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        try {
+            // Validation
+            if (!email || !password) {
+                setError('Email dan password harus diisi');
+                setIsLoading(false);
+                return;
+            }
 
-        // Demo validation
-        if (!email || !password) {
-            setError('Email dan password harus diisi');
+            if (!email.includes('@')) {
+                setError('Format email tidak valid');
+                setIsLoading(false);
+                return;
+            }
+
+            // Login dengan Supabase
+            const supabase = createClient();
+
+            // Cek apakah user ada di database
+            const { data: userData, error: userError } = await supabase
+                .from('users')
+                .select('*')
+                .eq('email', email)
+                .eq('password', password) // Note: In production, use bcrypt hash comparison
+                .single();
+
+            if (userError || !userData) {
+                setError('Email atau password salah');
+                setIsLoading(false);
+                return;
+            }
+
+            // Cek status user
+            if (userData.status !== 'Active') {
+                setError('Akun Anda tidak aktif. Hubungi administrator.');
+                setIsLoading(false);
+                return;
+            }
+
+            // Simpan session ke localStorage (untuk demo)
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('user', JSON.stringify({
+                    id: userData.id,
+                    email: userData.email,
+                    name: userData.full_name,
+                    level: userData.level
+                }));
+            }
+
+            setSuccess('Login berhasil! Mengalihkan...');
+
+            // Redirect berdasarkan role
+            setTimeout(() => {
+                if (userData.level === 'Admin') {
+                    router.push('/admin');
+                } else {
+                    router.push('/');
+                }
+            }, 1000);
+
+        } catch (err: any) {
+            console.error('Login error:', err);
+            setError('Terjadi kesalahan. Silakan coba lagi.');
+        } finally {
             setIsLoading(false);
-            return;
         }
-
-        if (!email.includes('@')) {
-            setError('Format email tidak valid');
-            setIsLoading(false);
-            return;
-        }
-
-        // Demo success - in production, integrate with Supabase
-        setSuccess('Login berhasil! Mengalihkan...');
-        setTimeout(() => {
-            router.push('/');
-        }, 1000);
     };
 
     const handleGoogleLogin = async () => {
         setIsLoading(true);
-        // In production, integrate with Supabase Google OAuth
-        await new Promise(resolve => setTimeout(resolve, 1000));
         setError('Google login belum dikonfigurasi. Silakan setup Supabase OAuth.');
         setIsLoading(false);
     };

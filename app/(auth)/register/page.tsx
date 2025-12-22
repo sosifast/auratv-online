@@ -98,14 +98,10 @@ export default function RegisterPage() {
         }
 
         // Check if Supabase is configured
-        if (!isSupabaseConfigured()) {
-            setError('Supabase belum dikonfigurasi. Silakan tambahkan NEXT_PUBLIC_SUPABASE_URL dan NEXT_PUBLIC_SUPABASE_ANON_KEY di file .env.local');
-            setIsLoading(false);
-            return;
-        }
+        const isConfigured = isSupabaseConfigured();
 
         try {
-            // Create user in Supabase
+            // Create user
             await userService.create({
                 full_name: formData.name,
                 email: formData.email,
@@ -115,6 +111,7 @@ export default function RegisterPage() {
             });
 
             setSuccess('Akun berhasil dibuat! Mengalihkan ke login...');
+
             setTimeout(() => {
                 router.push('/login');
             }, 1500);
@@ -123,8 +120,6 @@ export default function RegisterPage() {
             // Handle specific errors
             if (err.message?.includes('duplicate key') || err.message?.includes('already exists') || err.code === '23505') {
                 setError('Email sudah terdaftar. Silakan gunakan email lain atau login.');
-            } else if (err.message?.includes('Supabase not configured')) {
-                setError('Supabase belum dikonfigurasi. Silakan cek file .env.local');
             } else {
                 setError(err.message || 'Gagal membuat akun. Silakan coba lagi.');
             }
