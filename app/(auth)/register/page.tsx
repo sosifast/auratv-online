@@ -17,7 +17,7 @@ import {
     X
 } from 'lucide-react';
 import { userService } from '@/lib/services/users';
-import { isSupabaseConfigured } from '@/lib/supabase/client';
+import { createClient, isSupabaseConfigured } from '@/lib/supabase/client';
 
 export default function RegisterPage() {
     const router = useRouter();
@@ -99,13 +99,29 @@ export default function RegisterPage() {
 
         // Check if Supabase is configured
         const isConfigured = isSupabaseConfigured();
+        const supabase = createClient();
 
         try {
-            // Create user
-            await userService.create({
-                full_name: formData.name,
+            // 1. Create user in Supabase Auth
+            const { data: authData, error: authError } = await supabase.auth.signUp({
                 email: formData.email,
                 password: formData.password,
+                options: {
+                    data: {
+                        full_name: formData.name,
+                    }
+                }
+            });
+
+            if (authError) throw authError;
+            if (!authData.user) throw new Error('Gagal membuat akun auth');
+
+            // 2. Create user in our custom users table
+            await userService.create({
+                id: authData.user.id, // Direct link to Auth ID
+                full_name: formData.name,
+                email: formData.email,
+                password: formData.password, // Still sync for legacy if needed, but Auth handles it now
                 level: 'Member',
                 status: 'Active'
             });

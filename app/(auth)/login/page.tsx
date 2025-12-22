@@ -48,28 +48,56 @@ export default function LoginPage() {
             // Login dengan Supabase
             const supabase = createClient();
 
-            // Cek apakah user ada di database
-            const { data: userData, error: userError } = await supabase
+            // Login dengan Supabase Auth (untuk membuat session nyata)
+            const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (authError) {
+                // Fallback: Cek manual jika Auth gagal tapi user ada di DB (misal belum migrasi ke Auth)
+                const { data: legacyUser, error: legacyError } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('email', email)
+                    .eq('password', password)
+                    .single();
+
+                if (legacyError || !legacyUser) {
+                    setError('Email atau password salah');
+                    setIsLoading(false);
+                    return;
+                }
+
+                // Jika user ada di DB tapi tidak di Auth, arahkan untuk register ulang atau kita bisa otomatis sign up
+                // Untuk sementara, kita beritahu saja
+                setError('Akun Anda perlu diperbarui. Silakan gunakan link Lupa Password.');
+                setIsLoading(false);
+                return;
+            }
+
+            // Cek status dan data user dari tabel kustom
+            const { data: userData } = await supabase
                 .from('users')
                 .select('*')
-                .eq('email', email)
-                .eq('password', password) // Note: In production, use bcrypt hash comparison
+                .eq('id', authData.user.id)
                 .single();
 
-            if (userError || !userData) {
-                setError('Email atau password salah');
+            if (!userData) {
+                setError('Data profil tidak ditemukan');
                 setIsLoading(false);
                 return;
             }
 
             // Cek status user
             if (userData.status !== 'Active') {
+                await supabase.auth.signOut();
                 setError('Akun Anda tidak aktif. Hubungi administrator.');
                 setIsLoading(false);
                 return;
             }
 
-            // Simpan session ke localStorage (untuk demo)
+            // Simpan session ke localStorage (opsional, untuk kompatibilitas kode lama)
             if (typeof window !== 'undefined') {
                 localStorage.setItem('user', JSON.stringify({
                     id: userData.id,

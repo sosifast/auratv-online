@@ -101,7 +101,10 @@ export default function AdminLayout({
 
                     {/* Logout */}
                     <button
-                        onClick={() => {
+                        onClick={async () => {
+                            const { createClient } = await import('@/lib/supabase/client');
+                            const supabase = createClient();
+                            await supabase.auth.signOut();
                             localStorage.removeItem('user');
                             router.push('/login');
                         }}
@@ -213,7 +216,10 @@ export default function AdminLayout({
                                                 Settings
                                             </Link>
                                             <button
-                                                onClick={() => {
+                                                onClick={async () => {
+                                                    const { createClient } = await import('@/lib/supabase/client');
+                                                    const supabase = createClient();
+                                                    await supabase.auth.signOut();
                                                     localStorage.removeItem('user');
                                                     router.push('/login');
                                                 }}
