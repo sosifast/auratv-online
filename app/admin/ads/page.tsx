@@ -1,18 +1,18 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Settings, Save, Eye, EyeOff, ExternalLink, RefreshCw } from 'lucide-react';
+import { Settings, Save, Eye, EyeOff, Copy, RefreshCw, Code } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { clearAdsCache } from '@/components/ads/AdsterraAds';
 
 interface AdConfig {
     id: string;
     ad_type: string;
-    ad_key: string;
-    ad_script_url: string;
+    ad_script: string;
     is_enabled: boolean;
     placement: string[];
     description: string;
+    ad_notes: string;
 }
 
 export default function AdsConfigPage() {
@@ -53,12 +53,10 @@ export default function AdsConfigPage() {
 
             if (error) throw error;
 
-            // Update local state
             setAds(ads.map(ad =>
                 ad.id === id ? { ...ad, is_enabled: !currentState } : ad
             ));
 
-            // Clear cache
             clearAdsCache();
         } catch (err) {
             console.error('Error toggling ad:', err);
@@ -73,20 +71,19 @@ export default function AdsConfigPage() {
             const { error } = await supabase
                 .from('ads_config')
                 .update({
-                    ad_key: ad.ad_key,
-                    ad_script_url: ad.ad_script_url,
-                    placement: ad.placement
+                    ad_script: ad.ad_script,
+                    placement: ad.placement,
+                    ad_notes: ad.ad_notes
                 })
                 .eq('id', ad.id);
 
             if (error) throw error;
 
-            // Clear cache
             clearAdsCache();
-            alert('Ad configuration saved!');
+            alert('✅ Ad script saved successfully!');
         } catch (err) {
             console.error('Error saving ad:', err);
-            alert('Failed to save ad configuration');
+            alert('❌ Failed to save ad script');
         } finally {
             setSaving(false);
         }
@@ -106,6 +103,30 @@ export default function AdsConfigPage() {
                 : [...ad.placement, place];
             return { ...ad, placement: placements };
         }));
+    };
+
+    const copyExample = (type: string) => {
+        const examples: Record<string, string> = {
+            banner: `<script async="async" data-cfasync="false" src="https://pl28309557.effectivegatecpm.com/YOUR_KEY_HERE/invoke.js"></script>
+<div id="container-YOUR_KEY_HERE"></div>`,
+            native: `<script async="async" data-cfasync="false" src="https://pl28309557.effectivegatecpm.com/YOUR_KEY_HERE/invoke.js"></script>
+<div id="container-YOUR_KEY_HERE"></div>`,
+            social_bar: `<script async="async" data-cfasync="false" src="https://pl28309557.effectivegatecpm.com/YOUR_KEY_HERE/invoke.js"></script>`,
+            popunder: `<script type="text/javascript">
+    atOptions = {
+        'key' : 'YOUR_KEY_HERE',
+        'format' : 'iframe',
+        'height' : 60,
+        'width' : 468,
+        'params' : {}
+    };
+</script>
+<script type="text/javascript" src="//www.topcreativeformat.com/YOUR_KEY_HERE/invoke.js"></script>`,
+            smartlink: `<script async="async" data-cfasync="false" src="https://pl28309557.effectivegatecpm.com/YOUR_KEY_HERE/invoke.js"></script>`
+        };
+
+        navigator.clipboard.writeText(examples[type] || '');
+        alert('📋 Example copied to clipboard!');
     };
 
     const getAdIcon = (type: string) => {
@@ -136,7 +157,7 @@ export default function AdsConfigPage() {
                         <Settings className="w-7 h-7" />
                         Ads Configuration
                     </h1>
-                    <p className="text-gray-400 mt-1">Kelola iklan Adsterra dari database</p>
+                    <p className="text-gray-400 mt-1">Paste full HTML script dari Adsterra</p>
                 </div>
                 <button
                     onClick={fetchAds}
@@ -147,15 +168,19 @@ export default function AdsConfigPage() {
                 </button>
             </div>
 
-            {/* Info Banner */}
+            {/* Instructions */}
             <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                    <ExternalLink className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
-                    <div>
-                        <p className="text-blue-300 font-medium">Get Adsterra Ad Keys</p>
-                        <p className="text-blue-200 text-sm mt-1">
-                            Login to <a href="https://publishers.adsterra.com/" target="_blank" rel="noopener" className="underline">Adsterra Dashboard</a> → Create Ad Zones → Copy Keys
-                        </p>
+                    <Code className="w-5 h-5 text-blue-400 flex-shrink-0 mt-0.5" />
+                    <div className="flex-1">
+                        <p className="text-blue-300 font-medium mb-2">Cara Pakai:</p>
+                        <ol className="text-blue-200 text-sm space-y-1 list-decimal list-inside">
+                            <li>Login ke <a href="https://publishers.adsterra.com/" target="_blank" rel="noopener" className="underline">Adsterra Dashboard</a></li>
+                            <li>Buat Ad Zone → Copy <strong>seluruh HTML script</strong></li>
+                            <li>Paste di textarea di bawah</li>
+                            <li>Pilih halaman (Homepage/Play/Category)</li>
+                            <li>Enable & Save!</li>
+                        </ol>
                     </div>
                 </div>
             </div>
@@ -173,56 +198,65 @@ export default function AdsConfigPage() {
                                 </h3>
                                 <p className="text-gray-400 text-sm mt-1">Type: {ad.ad_type}</p>
                             </div>
-                            <button
-                                onClick={() => handleToggle(ad.id, ad.is_enabled)}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${ad.is_enabled
-                                        ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
-                                        : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
-                                    }`}
-                            >
-                                {ad.is_enabled ? (
-                                    <><Eye className="w-4 h-4" /> Enabled</>
-                                ) : (
-                                    <><EyeOff className="w-4 h-4" /> Disabled</>
-                                )}
-                            </button>
+                            <div className="flex gap-2">
+                                <button
+                                    onClick={() => copyExample(ad.ad_type)}
+                                    className="flex items-center gap-2 px-3 py-2 bg-zinc-700 hover:bg-zinc-600 text-white rounded-lg text-sm transition"
+                                >
+                                    <Copy className="w-4 h-4" />
+                                    Copy Example
+                                </button>
+                                <button
+                                    onClick={() => handleToggle(ad.id, ad.is_enabled)}
+                                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition ${ad.is_enabled
+                                            ? 'bg-green-500/20 text-green-400 hover:bg-green-500/30'
+                                            : 'bg-red-500/20 text-red-400 hover:bg-red-500/30'
+                                        }`}
+                                >
+                                    {ad.is_enabled ? (
+                                        <><Eye className="w-4 h-4" /> ON</>
+                                    ) : (
+                                        <><EyeOff className="w-4 h-4" /> OFF</>
+                                    )}
+                                </button>
+                            </div>
                         </div>
 
-                        {/* Ad Key */}
+                        {/* Ad Script HTML */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Ad Key <span className="text-red-500">*</span>
+                                HTML Script dari Adsterra <span className="text-red-500">*</span>
                             </label>
-                            <input
-                                type="text"
-                                value={ad.ad_key}
-                                onChange={(e) => updateAd(ad.id, 'ad_key', e.target.value)}
-                                placeholder="e.g., abc123def456ghi789"
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-600"
-                            />
-                        </div>
-
-                        {/* Script URL */}
-                        <div className="mb-4">
-                            <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Script URL Template
-                            </label>
-                            <input
-                                type="text"
-                                value={ad.ad_script_url}
-                                onChange={(e) => updateAd(ad.id, 'ad_script_url', e.target.value)}
-                                placeholder="//www.example.com/{KEY}/invoke.js"
-                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                            <textarea
+                                value={ad.ad_script}
+                                onChange={(e) => updateAd(ad.id, 'ad_script', e.target.value)}
+                                placeholder={`Paste HTML dari Adsterra di sini:\n<script async="async" data-cfasync="false" src="https://..."></script>\n<div id="container-..."></div>`}
+                                rows={6}
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-3 text-white font-mono text-sm focus:outline-none focus:ring-2 focus:ring-red-600"
                             />
                             <p className="text-xs text-gray-500 mt-1">
-                                Use {'{KEY}'} as placeholder for ad key
+                                Copy & paste seluruh script HTML dari Adsterra (include &lt;script&gt; dan &lt;div&gt;)
                             </p>
+                        </div>
+
+                        {/* Notes */}
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-300 mb-2">
+                                Notes (Optional)
+                            </label>
+                            <input
+                                type="text"
+                                value={ad.ad_notes || ''}
+                                onChange={(e) => updateAd(ad.id, 'ad_notes', e.target.value)}
+                                placeholder="e.g., High CPM, Test Campaign, etc."
+                                className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-600"
+                            />
                         </div>
 
                         {/* Placements */}
                         <div className="mb-4">
                             <label className="block text-sm font-medium text-gray-300 mb-2">
-                                Show On Pages
+                                Tampilkan di Halaman
                             </label>
                             <div className="flex gap-2">
                                 {['homepage', 'play', 'category'].map(place => (
@@ -253,11 +287,11 @@ export default function AdsConfigPage() {
                 ))}
             </div>
 
-            {/* Footer Info */}
+            {/* Footer Tip */}
             <div className="bg-zinc-800/30 rounded-lg p-4 border border-zinc-700/50">
                 <p className="text-gray-400 text-sm">
-                    💡 <strong>Tip:</strong> Ads will automatically load on enabled pages once you save the configuration.
-                    Clear browser cache if changes don't appear immediately.
+                    💡 <strong>Tip:</strong> Script akan otomatis load di halaman yang dipilih.
+                    Refresh halaman jika perubahan belum muncul.
                 </p>
             </div>
         </div>

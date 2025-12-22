@@ -7,6 +7,14 @@ import {
     ArrowLeft, Settings, List, ThumbsUp, ThumbsDown, Share2, Plus, ChevronRight
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import {
+    AdsterraBanner,
+    AdsterraNativeBanner,
+    AdsterraSocialBar,
+    AdsterraPopunder,
+    AdsterraSmartlink,
+    AdContainer
+} from '@/components/ads/AdsterraAds';
 
 interface Streaming {
     id: string;
@@ -14,6 +22,8 @@ interface Streaming {
     name: string;
     slug: string;
     description: string | null;
+    title_seo: string | null;
+    desc_seo: string | null;
     url_banner: string | null;
     view_count: number;
     category?: { name: string; slug: string };
@@ -121,7 +131,7 @@ export default function PlayPage() {
 
     const videoRef = useRef<HTMLVideoElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
-    const controlsTimeoutRef = useRef<NodeJS.Timeout>();
+    const controlsTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
     const [streaming, setStreaming] = useState<Streaming | null>(null);
     const [playlist, setPlaylist] = useState<Playlist[]>([]);
@@ -149,6 +159,50 @@ export default function PlayPage() {
                 if (streamingData) {
                     setStreaming(streamingData);
                     incrementViewCount(streamingData.id);
+
+                    // Update document title and meta for SEO
+                    const pageTitle = streamingData.title_seo || `Nonton ${streamingData.name} - Streaming Online`;
+                    const pageDesc = streamingData.desc_seo || streamingData.description || `Tonton ${streamingData.name} streaming online gratis di AuraTV. Nikmati kualitas HD dengan subtitle Indonesia.`;
+
+                    document.title = `${pageTitle} | AuraTV`;
+
+                    // Update or create meta description
+                    let metaDesc = document.querySelector('meta[name="description"]');
+                    if (!metaDesc) {
+                        metaDesc = document.createElement('meta');
+                        metaDesc.setAttribute('name', 'description');
+                        document.head.appendChild(metaDesc);
+                    }
+                    metaDesc.setAttribute('content', pageDesc);
+
+                    // Update or create og:title
+                    let ogTitle = document.querySelector('meta[property="og:title"]');
+                    if (!ogTitle) {
+                        ogTitle = document.createElement('meta');
+                        ogTitle.setAttribute('property', 'og:title');
+                        document.head.appendChild(ogTitle);
+                    }
+                    ogTitle.setAttribute('content', pageTitle);
+
+                    // Update or create og:description
+                    let ogDesc = document.querySelector('meta[property="og:description"]');
+                    if (!ogDesc) {
+                        ogDesc = document.createElement('meta');
+                        ogDesc.setAttribute('property', 'og:description');
+                        document.head.appendChild(ogDesc);
+                    }
+                    ogDesc.setAttribute('content', pageDesc);
+
+                    // Update or create og:image
+                    if (streamingData.url_banner) {
+                        let ogImage = document.querySelector('meta[property="og:image"]');
+                        if (!ogImage) {
+                            ogImage = document.createElement('meta');
+                            ogImage.setAttribute('property', 'og:image');
+                            document.head.appendChild(ogImage);
+                        }
+                        ogImage.setAttribute('content', streamingData.url_banner);
+                    }
 
                     const [playlistData, sameChannelData, recommendationsData, trendingData] = await Promise.all([
                         getPlaylist(streamingData.id),
@@ -414,6 +468,17 @@ export default function PlayPage() {
                 </div>
             </div>
 
+            {/* Popunder & Smartlink */}
+            <AdsterraPopunder placement="play" />
+            <AdsterraSmartlink placement="play" />
+
+            {/* Banner Ad before Info */}
+            <div className="max-w-6xl mx-auto px-4">
+                <AdContainer>
+                    <AdsterraBanner placement="play" />
+                </AdContainer>
+            </div>
+
             {/* Info Section */}
             <div className="max-w-6xl mx-auto px-4 py-8">
                 <div className="flex flex-col lg:flex-row gap-8">
@@ -483,6 +548,11 @@ export default function PlayPage() {
                     )}
                 </div>
 
+                {/* Native Banner Ad #1 */}
+                <AdContainer className="mt-8">
+                    <AdsterraNativeBanner placement="play" />
+                </AdContainer>
+
                 {/* Channel yang Sama */}
                 <div className="mt-12">
                     <h2 className="text-xl font-bold text-white mb-4">Channel yang Sama</h2>
@@ -506,6 +576,11 @@ export default function PlayPage() {
                     )}
                 </div>
 
+                {/* Native Banner Ad #2 */}
+                <AdContainer className="mt-8">
+                    <AdsterraNativeBanner placement="play" />
+                </AdContainer>
+
                 {/* Rekomendasi */}
                 <div className="mt-12">
                     <h2 className="text-xl font-bold text-white mb-4">Rekomendasi</h2>
@@ -528,6 +603,11 @@ export default function PlayPage() {
                         </div>
                     )}
                 </div>
+
+                {/* Native Banner Ad #3 */}
+                <AdContainer className="mt-8">
+                    <AdsterraNativeBanner placement="play" />
+                </AdContainer>
 
                 {/* Trending */}
                 <div className="mt-12">

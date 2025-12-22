@@ -168,6 +168,45 @@ export default function CategoryPage() {
                 setCategory(cat);
                 setCategories(cats);
                 setStreamings(streams);
+
+                // Update document title and meta for SEO
+                if (cat) {
+                    const pageTitle = categorySlug === 'trending'
+                        ? 'Trending - Film & Serial TV Populer'
+                        : `${cat.name} - Koleksi Film & Serial TV`;
+                    const pageDesc = categorySlug === 'trending'
+                        ? 'Jelajahi film dan serial TV yang sedang trending di AuraTV. Nikmati konten paling populer dan paling banyak ditonton.'
+                        : `Tonton koleksi ${cat.name} terbaik di AuraTV. Streaming online gratis dengan kualitas HD dan subtitle Indonesia. Total ${streams.length} konten tersedia.`;
+
+                    document.title = `${pageTitle} | AuraTV`;
+
+                    // Update or create meta description
+                    let metaDesc = document.querySelector('meta[name="description"]');
+                    if (!metaDesc) {
+                        metaDesc = document.createElement('meta');
+                        metaDesc.setAttribute('name', 'description');
+                        document.head.appendChild(metaDesc);
+                    }
+                    metaDesc.setAttribute('content', pageDesc);
+
+                    // Update or create og:title
+                    let ogTitle = document.querySelector('meta[property="og:title"]');
+                    if (!ogTitle) {
+                        ogTitle = document.createElement('meta');
+                        ogTitle.setAttribute('property', 'og:title');
+                        document.head.appendChild(ogTitle);
+                    }
+                    ogTitle.setAttribute('content', pageTitle);
+
+                    // Update or create og:description
+                    let ogDesc = document.querySelector('meta[property="og:description"]');
+                    if (!ogDesc) {
+                        ogDesc = document.createElement('meta');
+                        ogDesc.setAttribute('property', 'og:description');
+                        document.head.appendChild(ogDesc);
+                    }
+                    ogDesc.setAttribute('content', pageDesc);
+                }
             } catch (err) {
                 console.error('Error:', err);
             } finally {
