@@ -5,14 +5,6 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { Search as SearchIcon, ArrowLeft, Play, LayoutGrid } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import Link from 'next/link';
-import {
-    AdsterraBanner,
-    AdsterraNativeBanner,
-    AdsterraSocialBar,
-    AdsterraPopunder,
-    AdsterraSmartlink,
-    AdContainer
-} from '@/components/ads/AdsterraAds';
 
 interface Streaming {
     id: string;
@@ -162,17 +154,7 @@ function SearchResults() {
                         )}
                     </>
                 )}
-
-                {/* Banner Ad */}
-                <AdContainer className="my-8">
-                    <AdsterraBanner placement="search" />
-                </AdContainer>
             </div>
-
-            {/* Popunder & Smartlink & SocialBar */}
-            <AdsterraPopunder placement="search" />
-            <AdsterraSmartlink placement="search" />
-            <AdsterraSocialBar placement="search" />
         </div>
     );
 }

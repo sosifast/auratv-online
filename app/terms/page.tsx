@@ -4,14 +4,6 @@ import { useLanguage } from '@/lib/language-context';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import Link from 'next/link';
 import { ArrowLeft, FileText } from 'lucide-react';
-import {
-    AdsterraBanner,
-    AdsterraNativeBanner,
-    AdsterraSocialBar,
-    AdsterraPopunder,
-    AdsterraSmartlink,
-    AdContainer
-} from '@/components/ads/AdsterraAds';
 
 export default function TermsPage() {
     const { t } = useLanguage();
@@ -209,17 +201,7 @@ export default function TermsPage() {
                         </div>
                     </div>
                 </div>
-
-                {/* Banner Ad */}
-                <AdContainer className="my-8">
-                    <AdsterraBanner placement="terms" />
-                </AdContainer>
             </main>
-
-            {/* Popunder & Smartlink & SocialBar */}
-            <AdsterraPopunder placement="terms" />
-            <AdsterraSmartlink placement="terms" />
-            <AdsterraSocialBar placement="terms" />
         </div>
     );
 }

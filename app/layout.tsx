@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { LanguageProvider } from "@/lib/language-context";
+import { HeaderEmbedCodes, BodyStartEmbedCodes, BodyEndEmbedCodes } from "@/components/EmbedCode";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -58,13 +59,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Embed codes from database will be injected here */}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <HeaderEmbedCodes />
+        <BodyStartEmbedCodes />
         <LanguageProvider>
           {children}
           <Analytics />
         </LanguageProvider>
+        <BodyEndEmbedCodes />
       </body>
     </html>
   );

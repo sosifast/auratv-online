@@ -4,14 +4,6 @@ import { useLanguage } from '@/lib/language-context';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import Link from 'next/link';
 import { ArrowLeft, Shield } from 'lucide-react';
-import {
-    AdsterraBanner,
-    AdsterraNativeBanner,
-    AdsterraSocialBar,
-    AdsterraPopunder,
-    AdsterraSmartlink,
-    AdContainer
-} from '@/components/ads/AdsterraAds';
 
 export default function PrivacyPage() {
     const { t } = useLanguage();
@@ -209,17 +201,7 @@ export default function PrivacyPage() {
                         </div>
                     </div>
                 </div>
-
-                {/* Banner Ad */}
-                <AdContainer className="my-8">
-                    <AdsterraBanner placement="privacy" />
-                </AdContainer>
             </main>
-
-            {/* Popunder & Smartlink & SocialBar */}
-            <AdsterraPopunder placement="privacy" />
-            <AdsterraSmartlink placement="privacy" />
-            <AdsterraSocialBar placement="privacy" />
         </div>
     );
 }

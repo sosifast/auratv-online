@@ -4,14 +4,6 @@ import { useLanguage } from '@/lib/language-context';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import Link from 'next/link';
 import { ArrowLeft, MessageCircleQuestion, ChevronDown } from 'lucide-react';
-import {
-    AdsterraBanner,
-    AdsterraNativeBanner,
-    AdsterraSocialBar,
-    AdsterraPopunder,
-    AdsterraSmartlink,
-    AdContainer
-} from '@/components/ads/AdsterraAds';
 import { useState } from 'react';
 
 export default function FAQPage() {
@@ -143,11 +135,6 @@ export default function FAQPage() {
                     </div>
                 </div>
 
-                {/* Banner Ad */}
-                <AdContainer className="my-8">
-                    <AdsterraBanner placement="faq" />
-                </AdContainer>
-
                 {/* Footer Links */}
                 <div className="mt-8 pt-8 border-t border-white/10">
                     <div className="flex flex-wrap gap-4 justify-center">
@@ -166,11 +153,6 @@ export default function FAQPage() {
                     </div>
                 </div>
             </main>
-
-            {/* Popunder & Smartlink & SocialBar */}
-            <AdsterraPopunder placement="faq" />
-            <AdsterraSmartlink placement="faq" />
-            <AdsterraSocialBar placement="faq" />
         </div>
     );
 }
