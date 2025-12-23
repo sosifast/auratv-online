@@ -69,9 +69,9 @@ export default function RootLayout({
         <BodyStartEmbedCodes />
         <LanguageProvider>
           {children}
-          <Analytics />
         </LanguageProvider>
         <BodyEndEmbedCodes />
+        <Analytics />
       </body>
     </html>
   );
