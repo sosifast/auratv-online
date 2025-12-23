@@ -55,6 +55,13 @@ export default function LoginPage() {
             });
 
             if (authError) {
+                // Check if error is because email is not confirmed
+                if (authError.message.toLowerCase().includes('email not confirmed')) {
+                    setError('Email Anda belum diverifikasi. Silakan cek kotak masuk email Anda.');
+                    setIsLoading(false);
+                    return;
+                }
+
                 // Fallback: Cek manual jika Auth gagal tapi user ada di DB (misal belum migrasi ke Auth)
                 const { data: legacyUser, error: legacyError } = await supabase
                     .from('users')
@@ -70,7 +77,6 @@ export default function LoginPage() {
                 }
 
                 // Jika user ada di DB tapi tidak di Auth, arahkan untuk register ulang atau kita bisa otomatis sign up
-                // Untuk sementara, kita beritahu saja
                 setError('Akun Anda perlu diperbarui. Silakan gunakan link Lupa Password.');
                 setIsLoading(false);
                 return;

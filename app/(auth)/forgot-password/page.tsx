@@ -188,11 +188,11 @@ export default function ForgotPasswordPage() {
                         <div className="bg-zinc-800/50 border border-zinc-700 rounded-xl p-4 mb-6">
                             <div className="flex items-center gap-3 mb-3">
                                 <div className="w-10 h-10 bg-red-600 rounded-lg flex items-center justify-center">
-                                    <span className="text-white font-bold">S</span>
+                                    <span className="text-white font-bold">A</span>
                                 </div>
                                 <div className="text-left">
-                                    <p className="text-white font-medium text-sm">StreamFlix</p>
-                                    <p className="text-gray-500 text-xs">noreply@streamflix.co.id</p>
+                                    <p className="text-white font-medium text-sm">AuraTV</p>
+                                    <p className="text-gray-500 text-xs">noreply@auratv.com</p>
                                 </div>
                             </div>
                             <div className="text-left">
@@ -245,7 +245,7 @@ export default function ForgotPasswordPage() {
 
             {/* Help Text */}
             <p className="text-center mt-6 text-gray-600 text-xs">
-                Butuh bantuan? <Link href="#" className="text-red-500 hover:text-red-400">Hubungi Support</Link>
+                Butuh bantuan? <Link href="/help" className="text-red-500 hover:text-red-400">Hubungi Support</Link>
             </p>
         </div>
     );

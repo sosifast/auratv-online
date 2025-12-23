@@ -308,9 +308,9 @@ export default function RegisterPage() {
                         </div>
                         <span className="text-sm text-gray-400 group-hover:text-gray-300">
                             Saya menyetujui{' '}
-                            <Link href="#" className="text-red-500 hover:text-red-400">Syarat & Ketentuan</Link>
+                            <Link href="/terms" className="text-red-500 hover:text-red-400">Syarat & Ketentuan</Link>
                             {' '}dan{' '}
-                            <Link href="#" className="text-red-500 hover:text-red-400">Kebijakan Privasi</Link>
+                            <Link href="/privacy" className="text-red-500 hover:text-red-400">Kebijakan Privasi</Link>
                         </span>
                     </label>
 

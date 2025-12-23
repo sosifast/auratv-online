@@ -1,10 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Hls from 'hls.js';
+
 import { useParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+
 import {
     Play, Pause, Volume2, VolumeX, Maximize, Minimize, SkipBack, SkipForward,
-    ArrowLeft, Settings, List, ThumbsUp, ThumbsDown, Share2, Plus, ChevronRight
+    ArrowLeft, Settings, List, ThumbsUp, ThumbsDown, Share2, Plus, ChevronRight, Heart
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import {
@@ -150,6 +154,82 @@ export default function PlayPage() {
     const [showSettings, setShowSettings] = useState(false);
     const [playbackSpeed, setPlaybackSpeed] = useState(1);
     const [selectedPlaylistIndex, setSelectedPlaylistIndex] = useState(0);
+    const isPlayingRef = useRef(isPlaying);
+    const [user, setUser] = useState<any>(null);
+    const [isFavorited, setIsFavorited] = useState(false);
+    const [favoriteLoading, setFavoriteLoading] = useState(false);
+    const supabase = createClient();
+
+    useEffect(() => {
+        isPlayingRef.current = isPlaying;
+    }, [isPlaying]);
+
+    // Check user authentication and favorite status
+    useEffect(() => {
+        async function checkUserAndFavorite() {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+
+            if (user && streaming) {
+                // Check if this streaming is favorited
+                const { data } = await supabase
+                    .from('favorites')
+                    .select('id')
+                    .eq('user_id', user.id)
+                    .eq('streaming_id', streaming.id)
+                    .single();
+
+                setIsFavorited(!!data);
+            }
+        }
+
+        checkUserAndFavorite();
+    }, [streaming]);
+
+    const toggleFavorite = async () => {
+        if (!user) {
+            router.push('/login');
+            return;
+        }
+
+        if (!streaming || favoriteLoading) return;
+
+        setFavoriteLoading(true);
+        const previousState = isFavorited;
+
+        // Optimistic UI update
+        setIsFavorited(!isFavorited);
+
+        try {
+            if (previousState) {
+                // Remove from favorites
+                const { error } = await supabase
+                    .from('favorites')
+                    .delete()
+                    .eq('user_id', user.id)
+                    .eq('streaming_id', streaming.id);
+
+                if (error) throw error;
+            } else {
+                // Add to favorites
+                const { error } = await supabase
+                    .from('favorites')
+                    .insert({
+                        user_id: user.id,
+                        streaming_id: streaming.id,
+                    });
+
+                if (error) throw error;
+            }
+        } catch (error) {
+            console.error('Error toggling favorite:', error);
+            // Revert on error
+            setIsFavorited(previousState);
+        } finally {
+            setFavoriteLoading(false);
+        }
+    };
+
 
     useEffect(() => {
         async function fetchData() {
@@ -313,7 +393,77 @@ export default function PlayPage() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isPlaying, volume]);
+    }, [isPlaying, volume, togglePlay, toggleFullscreen, toggleMute]);
+
+    const videoUrl = playlist[selectedPlaylistIndex]?.url_streaming || '';
+
+    useEffect(() => {
+        const video = videoRef.current;
+        if (!video || !videoUrl) return;
+
+        let hls: Hls | null = null;
+        const isM3U8 = videoUrl.toLowerCase().endsWith('.m3u8') || playlist[selectedPlaylistIndex]?.type_streaming === 'm3u8';
+
+        if (isM3U8) {
+            // Use proxy for external M3U8 to avoid CORS
+            const proxiedUrl = videoUrl.startsWith('http') && !videoUrl.includes(window.location.host)
+                ? `/api/proxy?url=${encodeURIComponent(videoUrl)}`
+                : videoUrl;
+
+            if (Hls.isSupported()) {
+                hls = new Hls({
+                    enableWorker: true,
+                    capLevelToPlayerSize: true,
+                    // Handle segment requests through proxy if needed
+                    xhrSetup: (xhr, url) => {
+                        if (url.startsWith('http') && !url.includes(window.location.host)) {
+                            // This might be tricky for segments, but let's start with manifest
+                        }
+                    }
+                });
+                hls.loadSource(proxiedUrl);
+                hls.attachMedia(video);
+                hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                    if (isPlayingRef.current) {
+                        video.play().catch(e => console.error("Error playing:", e));
+                    }
+                });
+                hls.on(Hls.Events.ERROR, (event, data) => {
+                    if (data.fatal) {
+                        switch (data.type) {
+                            case Hls.ErrorTypes.NETWORK_ERROR:
+                                console.error("fatal network error encountered, try to recover");
+                                hls?.startLoad();
+                                break;
+                            case Hls.ErrorTypes.MEDIA_ERROR:
+                                console.error("fatal media error encountered, try to recover");
+                                hls?.recoverMediaError();
+                                break;
+                            default:
+                                hls?.destroy();
+                                break;
+                        }
+                    }
+                });
+            } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+                // native Safari support
+                video.src = videoUrl;
+            }
+        } else {
+            // Normal mp4/ts or other formats
+            video.src = videoUrl;
+            video.load();
+            if (isPlayingRef.current) {
+                video.play().catch(e => console.error("Error playing:", e));
+            }
+        }
+
+        return () => {
+            if (hls) {
+                hls.destroy();
+            }
+        };
+    }, [videoUrl, playlist, selectedPlaylistIndex]);
 
     if (loading) {
         return (
@@ -327,14 +477,12 @@ export default function PlayPage() {
         return (
             <div className="min-h-screen bg-black flex flex-col items-center justify-center gap-4">
                 <p className="text-white text-xl">Streaming tidak ditemukan</p>
-                <button onClick={() => router.push('/')} className="px-6 py-2 bg-red-600 text-white rounded-lg">
+                <Link href="/" className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                     Kembali ke Beranda
-                </button>
+                </Link>
             </div>
         );
     }
-
-    const videoUrl = playlist[selectedPlaylistIndex]?.url_streaming || '';
 
     return (
         <div className="min-h-screen bg-black">
@@ -348,13 +496,13 @@ export default function PlayPage() {
                 {videoUrl ? (
                     <video
                         ref={videoRef}
-                        src={videoUrl}
                         className="w-full h-full"
                         poster={streaming.url_banner || undefined}
                         onTimeUpdate={() => videoRef.current && setCurrentTime(videoRef.current.currentTime)}
                         onLoadedMetadata={() => videoRef.current && setDuration(videoRef.current.duration)}
                         onEnded={() => setIsPlaying(false)}
                         onClick={togglePlay}
+                        playsInline
                         onError={(e) => {
                             console.error('Video error:', e);
                             // Silently handle video errors
@@ -375,10 +523,10 @@ export default function PlayPage() {
                     {/* Top Bar */}
                     <div className="absolute top-0 left-0 right-0 p-4 bg-gradient-to-b from-black/80 to-transparent">
                         <div className="flex items-center justify-between">
-                            <button onClick={() => router.push('/')} className="flex items-center gap-2 text-white hover:text-gray-300">
+                            <Link href="/" className="flex items-center gap-2 text-white hover:text-gray-300 z-50">
                                 <ArrowLeft className="w-6 h-6" />
                                 <span className="hidden sm:inline">Kembali</span>
-                            </button>
+                            </Link>
                             <h1 className="text-white font-bold text-lg truncate max-w-md">{streaming.name}</h1>
                             <div className="w-20"></div>
                         </div>
@@ -494,13 +642,21 @@ export default function PlayPage() {
 
                         {/* Actions */}
                         <div className="flex flex-wrap gap-4">
-                            <button className="flex items-center gap-2 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700">
+                            <button className="flex items-center gap-2 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition">
                                 <Plus className="w-5 h-5" /> Daftar Saya
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700">
-                                <ThumbsUp className="w-5 h-5" /> Suka
+                            <button
+                                onClick={toggleFavorite}
+                                disabled={favoriteLoading}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition ${isFavorited
+                                        ? 'bg-red-600 text-white hover:bg-red-700'
+                                        : 'bg-zinc-800 text-white hover:bg-zinc-700'
+                                    } disabled:opacity-50 disabled:cursor-not-allowed`}
+                            >
+                                <Heart className={`w-5 h-5 ${isFavorited ? 'fill-white' : ''}`} />
+                                {isFavorited ? 'Disukai' : 'Suka'}
                             </button>
-                            <button className="flex items-center gap-2 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700">
+                            <button className="flex items-center gap-2 px-4 py-2 bg-zinc-800 text-white rounded-lg hover:bg-zinc-700 transition">
                                 <Share2 className="w-5 h-5" /> Bagikan
                             </button>
                         </div>
@@ -523,11 +679,7 @@ export default function PlayPage() {
                                             key={item.id}
                                             onClick={() => {
                                                 setSelectedPlaylistIndex(index);
-                                                if (videoRef.current) {
-                                                    videoRef.current.src = item.url_streaming;
-                                                    videoRef.current.load();
-                                                    if (isPlaying) videoRef.current.play();
-                                                }
+                                                // Source update is handled by useEffect
                                             }}
                                             className={`w-full p-4 text-left border-b border-zinc-800 hover:bg-zinc-800 transition ${selectedPlaylistIndex === index ? 'bg-zinc-800' : ''
                                                 }`}

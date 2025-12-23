@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { Play, Plus, Info, Grid, List, ChevronDown, Search, Bell, Star } from 'lucide-react';
+import { Play, Plus, Info, Grid, List, ChevronDown, Search, Star, Settings, Heart, LogOut } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import Link from 'next/link';
 import {
     AdsterraBanner,
     AdsterraNativeBanner,
@@ -77,6 +78,55 @@ async function getCategoryBySlug(slug: string): Promise<Category | null> {
 // Navbar Component
 const Navbar = ({ scrolled }: { scrolled: boolean }) => {
     const router = useRouter();
+    const [user, setUser] = useState<any>(null);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const supabase = createClient();
+    const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        // Check current user
+        const checkUser = async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            setUser(user);
+        };
+        checkUser();
+
+        // Listen for auth changes
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+            setUser(session?.user || null);
+        });
+
+        return () => subscription.unsubscribe();
+    }, []);
+
+    useEffect(() => {
+        // Close dropdown when clicking outside
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowDropdown(false);
+            }
+        };
+
+        if (showDropdown) {
+            document.addEventListener('mousedown', handleClickOutside);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [showDropdown]);
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        setShowDropdown(false);
+        router.push('/');
+    };
+
+    const getUserInitial = () => {
+        if (!user) return 'A';
+        return user.email?.charAt(0).toUpperCase() || 'U';
+    };
+
     return (
         <nav className={`fixed top-0 w-full z-50 transition-all duration-500 px-4 md:px-12 py-4 flex items-center justify-between ${scrolled ? 'bg-zinc-950/95 shadow-lg' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
             <div className="flex items-center gap-8">
@@ -89,9 +139,65 @@ const Navbar = ({ scrolled }: { scrolled: boolean }) => {
                 </ul>
             </div>
             <div className="flex items-center gap-5 text-white">
-                <Search className="w-5 h-5 cursor-pointer hover:text-gray-300" />
-                <Bell className="w-5 h-5 cursor-pointer hover:text-gray-300" />
-                <div className="w-8 h-8 rounded bg-red-600 flex items-center justify-center font-bold cursor-pointer" onClick={() => router.push('/login')}>A</div>
+                <Link href="/search">
+                    <Search className="w-5 h-5 cursor-pointer hover:text-gray-300" />
+                </Link>
+                {user ? (
+                    <div className="relative" ref={dropdownRef}>
+                        <div
+                            className="flex items-center gap-2 cursor-pointer group"
+                            onClick={() => setShowDropdown(!showDropdown)}
+                        >
+                            <div className="w-8 h-8 rounded bg-red-600 flex items-center justify-center font-bold">
+                                {getUserInitial()}
+                            </div>
+                            <ChevronDown className={`w-4 h-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+                        </div>
+                        {showDropdown && (
+                            <div className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="px-4 py-3 border-b border-zinc-800">
+                                    <p className="text-sm font-semibold text-white truncate">{user.email}</p>
+                                    <p className="text-xs text-gray-400 mt-1">Member AuraTV</p>
+                                </div>
+                                <div className="py-1">
+                                    <button
+                                        onClick={() => {
+                                            setShowDropdown(false);
+                                            router.push('/admin/settings');
+                                        }}
+                                        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-zinc-800 transition text-left"
+                                    >
+                                        <Settings className="w-4 h-4 text-gray-400" />
+                                        <span className="text-sm">Pengaturan</span>
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            setShowDropdown(false);
+                                            router.push('/favorite');
+                                        }}
+                                        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-zinc-800 transition text-left"
+                                    >
+                                        <Heart className="w-4 h-4 text-gray-400" />
+                                        <span className="text-sm">Favorit Saya</span>
+                                    </button>
+                                </div>
+                                <div className="border-t border-zinc-800 py-1">
+                                    <button
+                                        onClick={handleLogout}
+                                        className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-red-600/10 hover:text-red-500 transition text-left"
+                                    >
+                                        <LogOut className="w-4 h-4" />
+                                        <span className="text-sm font-medium">Keluar</span>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                ) : (
+                    <div className="flex items-center gap-2 cursor-pointer group" onClick={() => router.push('/login')}>
+                        <div className="w-8 h-8 rounded bg-red-600 flex items-center justify-center font-bold">A</div>
+                    </div>
+                )}
             </div>
         </nav>
     );

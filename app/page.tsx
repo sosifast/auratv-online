@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Play, Info, Plus, Search, Bell, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Play, Info, Plus, Search, ChevronLeft, ChevronRight, Settings, Heart, LogOut, ChevronDown } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useLanguage } from '@/lib/language-context';
+import Link from 'next/link';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 import {
   AdsterraBanner,
   AdsterraNativeBanner,
@@ -70,27 +73,132 @@ async function getHeroStreaming(): Promise<Streaming | null> {
 // --- COMPONENTS ---
 const Navbar = ({ scrolled }: { scrolled: boolean }) => {
   const router = useRouter();
+  const { t } = useLanguage();
+  const [user, setUser] = useState<any>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const supabase = createClient();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Check current user
+    const checkUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    checkUser();
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event: any, session: any) => {
+      setUser(session?.user || null);
+    });
+
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    // Close dropdown when clicking outside
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+
+    if (showDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDropdown]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setShowDropdown(false);
+    router.push('/');
+  };
+
+  const getUserInitial = () => {
+    if (!user) return 'A';
+    return user.email?.charAt(0).toUpperCase() || 'U';
+  };
 
   return (
     <nav className={`fixed top-0 w-full z-50 transition-all duration-500 px-4 md:px-12 py-4 flex items-center justify-between ${scrolled ? 'bg-zinc-950/95 shadow-lg' : 'bg-gradient-to-b from-black/80 to-transparent'}`}>
       <div className="flex items-center gap-8">
         <h1 className="text-red-600 text-3xl font-bold tracking-tighter cursor-pointer" onClick={() => router.push('/')}>AURATV</h1>
         <ul className="hidden md:flex gap-6 text-sm text-gray-300 font-medium">
-          <li className="text-white cursor-pointer transition">Beranda</li>
-          <li onClick={() => router.push('/category/drama')} className="hover:text-white cursor-pointer transition">Serial TV</li>
-          <li onClick={() => router.push('/category/action')} className="hover:text-white cursor-pointer transition">Film</li>
-          <li onClick={() => router.push('/category/trending')} className="hover:text-white cursor-pointer transition">Baru & Populer</li>
-          <li className="hover:text-white cursor-pointer transition">Daftar Saya</li>
+          <li className="text-white cursor-pointer transition">{t.home}</li>
+          <li onClick={() => router.push('/category/drama')} className="hover:text-white cursor-pointer transition">{t.tvSeries}</li>
+          <li onClick={() => router.push('/category/action')} className="hover:text-white cursor-pointer transition">{t.movies}</li>
+          <li onClick={() => router.push('/category/trending')} className="hover:text-white cursor-pointer transition">{t.newPopular}</li>
+          <li className="hover:text-white cursor-pointer transition">{t.myList}</li>
         </ul>
       </div>
-      <div className="flex items-center gap-5 text-white">
-        <Search className="w-5 h-5 cursor-pointer hover:text-gray-300" />
-        <Bell className="w-5 h-5 cursor-pointer hover:text-gray-300" />
-        <div className="flex items-center gap-2 cursor-pointer group" onClick={() => router.push('/login')}>
-          <div className="w-8 h-8 rounded bg-red-600 flex items-center justify-center font-bold">A</div>
-        </div>
+      <div className="flex items-center gap-3 text-white">
+        <LanguageSwitcher />
+        <Link href="/search">
+          <Search className="w-5 h-5 cursor-pointer hover:text-gray-300" />
+        </Link>
+        {user ? (
+          <div className="relative" ref={dropdownRef}>
+            <div
+              className="flex items-center gap-2 cursor-pointer group"
+              onClick={() => setShowDropdown(!showDropdown)}
+            >
+              <div className="w-8 h-8 rounded bg-red-600 flex items-center justify-center font-bold">
+                {getUserInitial()}
+              </div>
+              <ChevronDown className={`w-4 h-4 transition-transform ${showDropdown ? 'rotate-180' : ''}`} />
+            </div>
+            {showDropdown && (
+              <div className="absolute right-0 mt-2 w-56 bg-zinc-900 border border-zinc-800 rounded-lg shadow-2xl overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="px-4 py-3 border-b border-zinc-800">
+                  <p className="text-sm font-semibold text-white truncate">{user.email}</p>
+                  <p className="text-xs text-gray-400 mt-1">{t.member}</p>
+                </div>
+                <div className="py-1">
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      router.push('/admin/settings');
+                    }}
+                    className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-zinc-800 transition text-left"
+                  >
+                    <Settings className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm">{t.settings}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowDropdown(false);
+                      router.push('/favorite');
+                    }}
+                    className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-zinc-800 transition text-left"
+                  >
+                    <Heart className="w-4 h-4 text-gray-400" />
+                    <span className="text-sm">{t.favorites}</span>
+                  </button>
+                </div>
+                <div className="border-t border-zinc-800 py-1">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full px-4 py-2.5 flex items-center gap-3 hover:bg-red-600/10 hover:text-red-500 transition text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span className="text-sm font-medium">{t.logout}</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="flex items-center gap-2 cursor-pointer group" onClick={() => router.push('/login')}>
+            <div className="w-8 h-8 rounded bg-red-600 flex items-center justify-center font-bold">A</div>
+          </div>
+        )}
       </div>
-    </nav>
+    </nav >
   );
 };
 

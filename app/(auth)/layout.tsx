@@ -31,7 +31,7 @@ export default function AuthLayout({
             <header className="relative z-50 px-6 md:px-12 py-6">
                 <Link href="/">
                     <h1 className="text-red-600 text-3xl md:text-4xl font-bold tracking-tighter cursor-pointer hover:text-red-500 transition inline-block">
-                        STREAMFLIX
+                        AuraTV
                     </h1>
                 </Link>
             </header>
@@ -44,13 +44,12 @@ export default function AuthLayout({
             {/* Footer */}
             <footer className="relative z-10 px-6 md:px-12 py-6 text-gray-500 text-sm">
                 <div className="flex flex-wrap gap-4 justify-center md:justify-start">
-                    <span className="hover:underline cursor-pointer hover:text-gray-300">FAQ</span>
-                    <span className="hover:underline cursor-pointer hover:text-gray-300">Pusat Bantuan</span>
-                    <span className="hover:underline cursor-pointer hover:text-gray-300">Ketentuan Penggunaan</span>
-                    <span className="hover:underline cursor-pointer hover:text-gray-300">Privasi</span>
-                    <span className="hover:underline cursor-pointer hover:text-gray-300">Preferensi Cookie</span>
+                    <Link href="/faq" className="hover:underline cursor-pointer hover:text-gray-300">FAQ</Link>
+                    <Link href="/help" className="hover:underline cursor-pointer hover:text-gray-300">Pusat Bantuan</Link>
+                    <Link href="/terms" className="hover:underline cursor-pointer hover:text-gray-300">Ketentuan Penggunaan</Link>
+                    <Link href="/privacy" className="hover:underline cursor-pointer hover:text-gray-300">Privasi</Link>
                 </div>
-                <p className="mt-4 text-center md:text-left">© 2024 StreamFlix Indonesia</p>
+                <p className="mt-4 text-center md:text-left">© 2024 AuraTV Indonesia</p>
             </footer>
         </div>
     );

@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { ToastProvider } from '@/components/ui/Toast';
 
 export default function AdminLayout({
     children,
@@ -50,6 +51,7 @@ export default function AdminLayout({
     };
 
     return (
+        <ToastProvider>
         <div className="min-h-screen bg-zinc-900">
             {/* Sidebar */}
             <aside
@@ -241,5 +243,6 @@ export default function AdminLayout({
                 </main>
             </div>
         </div>
+        </ToastProvider>
     );
 }

@@ -1,8 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Edit, Trash2, Search, Filter, Video, ExternalLink } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Plus, Edit, Trash2, Search, Filter, Video, ExternalLink, ChevronDown, X, Check } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
+import { useToast } from '@/components/ui/Toast';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
 interface Playlist {
     id: string;
@@ -23,6 +25,128 @@ interface Streaming {
     slug: string;
 }
 
+// Searchable Select Component
+function SearchableSelect({
+    options,
+    value,
+    onChange,
+    placeholder = 'Pilih...',
+    searchPlaceholder = 'Cari...'
+}: {
+    options: Streaming[];
+    value: string;
+    onChange: (value: string) => void;
+    placeholder?: string;
+    searchPlaceholder?: string;
+}) {
+    const [isOpen, setIsOpen] = useState(false);
+    const [search, setSearch] = useState('');
+    const containerRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const selectedOption = options.find(opt => opt.id === value);
+
+    const filteredOptions = options.filter(opt =>
+        opt.name.toLowerCase().includes(search.toLowerCase())
+    );
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setIsOpen(false);
+                setSearch('');
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        if (isOpen && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isOpen]);
+
+    return (
+        <div ref={containerRef} className="relative">
+            {/* Selected Value Display */}
+            <div
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2.5 text-left flex items-center justify-between cursor-pointer focus:outline-none focus:ring-2 focus:ring-red-600 transition"
+            >
+                <span className={selectedOption ? 'text-white' : 'text-gray-500'}>
+                    {selectedOption ? selectedOption.name : placeholder}
+                </span>
+                <div className="flex items-center gap-2">
+                    {selectedOption && (
+                        <span
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onChange('');
+                            }}
+                            className="p-1 hover:bg-zinc-700 rounded transition cursor-pointer"
+                        >
+                            <X className="w-4 h-4 text-gray-400 hover:text-white" />
+                        </span>
+                    )}
+                    <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
+                </div>
+            </div>
+
+            {/* Dropdown */}
+            {isOpen && (
+                <div className="absolute z-50 w-full mt-1 bg-zinc-800 border border-zinc-700 rounded-lg shadow-xl overflow-hidden">
+                    {/* Search Input */}
+                    <div className="p-2 border-b border-zinc-700">
+                        <div className="relative">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-500" />
+                            <input
+                                ref={inputRef}
+                                type="text"
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder={searchPlaceholder}
+                                className="w-full bg-zinc-900 border border-zinc-600 rounded-lg py-2 pl-9 pr-4 text-white text-sm placeholder:text-gray-500 focus:outline-none focus:ring-2 focus:ring-red-600"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Options List */}
+                    <div className="max-h-60 overflow-y-auto">
+                        {filteredOptions.length === 0 ? (
+                            <div className="px-4 py-3 text-gray-500 text-sm text-center">
+                                Tidak ada hasil untuk "{search}"
+                            </div>
+                        ) : (
+                            filteredOptions.map((opt) => (
+                                <div
+                                    key={opt.id}
+                                    onClick={() => {
+                                        onChange(opt.id);
+                                        setIsOpen(false);
+                                        setSearch('');
+                                    }}
+                                    className={`w-full px-4 py-2.5 text-left flex items-center justify-between hover:bg-zinc-700 transition cursor-pointer ${
+                                        value === opt.id ? 'bg-red-600/20 text-red-400' : 'text-white'
+                                    }`}
+                                >
+                                    <div>
+                                        <p className="font-medium">{opt.name}</p>
+                                        <p className="text-xs text-gray-500">/{opt.slug}</p>
+                                    </div>
+                                    {value === opt.id && (
+                                        <Check className="w-4 h-4 text-red-500" />
+                                    )}
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
 export default function PlaylistPage() {
     const [playlists, setPlaylists] = useState<Playlist[]>([]);
     const [streamings, setStreamings] = useState<Streaming[]>([]);
@@ -31,6 +155,10 @@ export default function PlaylistPage() {
     const [editingId, setEditingId] = useState<string | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [filterType, setFilterType] = useState<string>('all');
+        const [deleteId, setDeleteId] = useState<string | null>(null);
+        const [deleting, setDeleting] = useState(false);
+        const [saving, setSaving] = useState(false);
+        const toast = useToast();
 
     const [formData, setFormData] = useState({
         id_streaming: '',
@@ -81,6 +209,7 @@ export default function PlaylistPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setSaving(true);
 
         try {
             const supabase = createClient();
@@ -93,6 +222,7 @@ export default function PlaylistPage() {
                     .eq('id', editingId);
 
                 if (error) throw error;
+                toast.success('Playlist berhasil diupdate');
             } else {
                 // Create
                 const { error } = await supabase
@@ -100,13 +230,16 @@ export default function PlaylistPage() {
                     .insert(formData);
 
                 if (error) throw error;
+                toast.success('Playlist berhasil ditambahkan');
             }
 
             resetForm();
             fetchPlaylists();
         } catch (err: any) {
             console.error('Error saving playlist:', err);
-            alert(err.message || 'Gagal menyimpan playlist');
+            toast.error(err.message || 'Gagal menyimpan playlist');
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -122,21 +255,26 @@ export default function PlaylistPage() {
         setShowModal(true);
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Yakin ingin menghapus playlist ini?')) return;
+    const handleDelete = async () => {
+        if (!deleteId) return;
+        setDeleting(true);
 
         try {
             const supabase = createClient();
             const { error } = await supabase
                 .from('streaming_playlist')
                 .delete()
-                .eq('id', id);
+                .eq('id', deleteId);
 
             if (error) throw error;
+            toast.success('Playlist berhasil dihapus');
             fetchPlaylists();
         } catch (err: any) {
             console.error('Error deleting playlist:', err);
-            alert(err.message || 'Gagal menghapus playlist');
+            toast.error(err.message || 'Gagal menghapus playlist');
+        } finally {
+            setDeleting(false);
+            setDeleteId(null);
         }
     };
 
@@ -299,7 +437,7 @@ export default function PlaylistPage() {
                                                     <Edit className="w-4 h-4" />
                                                 </button>
                                                 <button
-                                                    onClick={() => handleDelete(playlist.id)}
+                                                    onClick={() => setDeleteId(playlist.id)}
                                                     className="p-2 text-red-400 hover:bg-red-500/20 rounded-lg transition"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
@@ -314,6 +452,18 @@ export default function PlaylistPage() {
                 </div>
             </div>
 
+            {/* Confirm Modal */}
+            <ConfirmModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={handleDelete}
+                title="Hapus Playlist"
+                message="Apakah Anda yakin ingin menghapus playlist ini? Tindakan ini tidak dapat dibatalkan."
+                confirmText="Ya, Hapus"
+                type="danger"
+                loading={deleting}
+            />
+
             {/* Modal */}
             {showModal && (
                 <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
@@ -323,22 +473,21 @@ export default function PlaylistPage() {
                         </h2>
 
                         <form onSubmit={handleSubmit} className="space-y-4">
-                            {/* Streaming Select */}
+                            {/* Streaming Select with Search */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-300 mb-2">
                                     Pilih Streaming
                                 </label>
-                                <select
+                                <SearchableSelect
+                                    options={streamings}
                                     value={formData.id_streaming}
-                                    onChange={(e) => setFormData({ ...formData, id_streaming: e.target.value })}
-                                    required
-                                    className="w-full bg-zinc-800 border border-zinc-700 rounded-lg px-4 py-2 text-white focus:outline-none focus:ring-2 focus:ring-red-600"
-                                >
-                                    <option value="">Pilih Streaming</option>
-                                    {streamings.map(s => (
-                                        <option key={s.id} value={s.id}>{s.name}</option>
-                                    ))}
-                                </select>
+                                    onChange={(value) => setFormData({ ...formData, id_streaming: value })}
+                                    placeholder="Pilih Streaming..."
+                                    searchPlaceholder="Cari streaming..."
+                                />
+                                {!formData.id_streaming && (
+                                    <input type="hidden" name="id_streaming" required />
+                                )}
                             </div>
 
                             {/* URL */}
@@ -411,14 +560,17 @@ export default function PlaylistPage() {
                             <div className="flex gap-3 pt-4">
                                 <button
                                     type="submit"
-                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-medium transition"
+                                    disabled={saving || !formData.id_streaming}
+                                    className="flex-1 bg-red-600 hover:bg-red-700 text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                                 >
+                                    {saving && <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />}
                                     {editingId ? 'Update' : 'Simpan'}
                                 </button>
                                 <button
                                     type="button"
                                     onClick={resetForm}
-                                    className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white py-2 rounded-lg font-medium transition"
+                                    disabled={saving}
+                                    className="flex-1 bg-zinc-700 hover:bg-zinc-600 text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50"
                                 >
                                     Batal
                                 </button>

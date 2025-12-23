@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react';
 import { streamingService } from '@/lib/services/streaming';
 import { categoryService } from '@/lib/services/category';
 import type { Category } from '@/lib/types/database';
+import { useToast } from '@/components/ui/Toast';
+import { ConfirmModal } from '@/components/ui/ConfirmModal';
 
 export default function StreamingPage() {
     const [showModal, setShowModal] = useState(false);
@@ -13,7 +15,9 @@ export default function StreamingPage() {
     const [categories, setCategories] = useState<Category[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
-    const [error, setError] = useState('');
+    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [deleting, setDeleting] = useState(false);
+    const toast = useToast();
 
     useEffect(() => {
         fetchData();
@@ -29,7 +33,7 @@ export default function StreamingPage() {
             setStreamings(streamingData);
             setCategories(categoryData);
         } catch (err: any) {
-            setError(err.message || 'Gagal memuat data');
+            toast.error(err.message || 'Gagal memuat data');
         } finally {
             setLoading(false);
         }
@@ -42,7 +46,6 @@ export default function StreamingPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
-        setError('');
 
         const formData = new FormData(e.target as HTMLFormElement);
         const payload = {
@@ -58,26 +61,33 @@ export default function StreamingPage() {
         try {
             if (editData) {
                 await streamingService.update(editData.id, payload);
+                toast.success('Streaming berhasil diupdate');
             } else {
                 await streamingService.create(payload);
+                toast.success('Streaming berhasil ditambahkan');
             }
             await fetchData();
             setShowModal(false);
             setEditData(null);
         } catch (err: any) {
-            setError(err.message || 'Gagal menyimpan data');
+            toast.error(err.message || 'Gagal menyimpan data');
         } finally {
             setSaving(false);
         }
     };
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Hapus streaming ini?')) return;
+    const handleDelete = async () => {
+        if (!deleteId) return;
+        setDeleting(true);
         try {
-            await streamingService.delete(id);
+            await streamingService.delete(deleteId);
             await fetchData();
+            toast.success('Streaming berhasil dihapus');
         } catch (err: any) {
-            setError(err.message || 'Gagal menghapus data');
+            toast.error(err.message || 'Gagal menghapus data');
+        } finally {
+            setDeleting(false);
+            setDeleteId(null);
         }
     };
 
@@ -96,10 +106,6 @@ export default function StreamingPage() {
                     Tambah Streaming
                 </button>
             </div>
-
-            {error && (
-                <div className="p-4 bg-red-500/10 border border-red-500/30 rounded-xl text-red-400">{error}</div>
-            )}
 
             <div className="relative max-w-md">
                 <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -144,7 +150,7 @@ export default function StreamingPage() {
                                                 <button onClick={() => { setEditData(item); setShowModal(true); }} className="p-2 text-gray-400 hover:text-white hover:bg-zinc-700 rounded-lg">
                                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
                                                 </button>
-                                                <button onClick={() => handleDelete(item.id)} className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg">
+                                                <button onClick={() => setDeleteId(item.id)} className="p-2 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded-lg">
                                                     <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                                                 </button>
                                             </div>
@@ -156,6 +162,17 @@ export default function StreamingPage() {
                     </table>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={!!deleteId}
+                onClose={() => setDeleteId(null)}
+                onConfirm={handleDelete}
+                title="Hapus Streaming"
+                message="Apakah Anda yakin ingin menghapus streaming ini? Tindakan ini tidak dapat dibatalkan."
+                confirmText="Ya, Hapus"
+                type="danger"
+                loading={deleting}
+            />
 
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

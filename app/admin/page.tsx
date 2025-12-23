@@ -236,6 +236,21 @@ export default function AdminDashboard() {
                         </div>
                         <span className="text-sm text-gray-400 group-hover:text-white transition">Settings</span>
                     </Link>
+                    <button
+                        onClick={() => {
+                            const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
+                            window.open(`${baseUrl}/sitemap.xml`, '_blank');
+                            alert('Sitemap dan Robots.txt sekarang bersifat dinamis dan akan otomatis terupdate setiap kali ada perubahan data.');
+                        }}
+                        className="flex flex-col items-center gap-3 p-4 bg-zinc-900/50 border border-zinc-800 rounded-xl hover:border-emerald-600 hover:bg-emerald-600/5 transition group cursor-pointer"
+                    >
+                        <div className="w-12 h-12 bg-emerald-600/10 rounded-xl flex items-center justify-center group-hover:bg-emerald-600/20 transition">
+                            <svg className="w-6 h-6 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                        </div>
+                        <span className="text-sm text-gray-400 group-hover:text-white transition">Auto SEO</span>
+                    </button>
                 </div>
             </div>
         </div>
