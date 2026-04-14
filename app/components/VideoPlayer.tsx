@@ -46,8 +46,10 @@ export const VideoPlayer = (props: VideoPlayerProps) => {
       // Error handling with more detail
       player.on('error', () => {
         const error = player.error();
-        console.error('VideoJS Error Code:', error.code);
-        console.error('VideoJS Error Message:', error.message);
+        if (error) {
+          console.error('VideoJS Error Code:', error.code);
+          console.error('VideoJS Error Message:', error.message);
+        }
       });
 
       // Automatic retry logic on source error
