@@ -1,0 +1,15 @@
+{
+  "common": {
+    "search": "채널 검색...",
+    "live": "라이브",
+    "trending": "인기",
+    "browse": "탐색",
+    "library": "라이브러리",
+    "home": "홈",
+    "similar": "유사한 채널",
+    "watch_now": "지금 시청",
+    "back": "뒤로",
+    "all": "전체",
+    "viewers": "시청자"
+  }
+}

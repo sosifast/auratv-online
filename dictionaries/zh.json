@@ -1,0 +1,15 @@
+{
+  "common": {
+    "search": "搜索频道...",
+    "live": "直播",
+    "trending": "热门",
+    "browse": "浏览",
+    "library": "媒体库",
+    "home": "首页",
+    "similar": "类似频道",
+    "watch_now": "现在观看",
+    "back": "返回",
+    "all": "全部",
+    "viewers": "观众"
+  }
+}

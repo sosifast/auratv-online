@@ -1,0 +1,15 @@
+{
+  "common": {
+    "search": "Search channels...",
+    "live": "LIVE",
+    "trending": "Trending",
+    "browse": "Browse",
+    "library": "Library",
+    "home": "Home",
+    "similar": "Similar Channels",
+    "watch_now": "Watch Now",
+    "back": "Back",
+    "all": "All",
+    "viewers": "Viewers"
+  }
+}
