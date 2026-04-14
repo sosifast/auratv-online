@@ -1,12 +1,12 @@
 [
   {
     "id": 1,
-    "name": "Watch Sport Live TV on Streamku",
+    "name": "VisionPro Test Channel",
     "slug": "watch-sport-live-tv-on-streamku",
-    "seo_title": "Watch Sport Live TV on Streamku – Free HD Sports Streaming",
-    "desc_title": "Watch sport live TV on Streamku with high-quality HD streaming.",
-    "image_url": "https://example.com/image1.jpg",
-    "url_stream": "https://example.com/image1.jpg",
+    "seo_title": "VisionPro Test - High Quality HLS Stream",
+    "desc_title": "Saluran percobaan untuk memastikan player bekerja dengan sempurna.",
+    "image_url": "https://images.unsplash.com/photo-1522869635100-9f4c5e86aa37?w=800",
+    "url_stream": "https://rtvstream.rtv.co.id:4555/hls/rtv.m3u8",
     "id_category": 1
   },
   {
