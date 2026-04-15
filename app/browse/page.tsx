@@ -11,7 +11,7 @@ import {
   LayoutGrid
 } from 'lucide-react';
 
-export default async function BrowsePage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
+export default async function BrowsePage({ searchParams }: { searchParams: Promise<{ category?: string, page?: string }> }) {
   const resolvedSearchParams = await searchParams;
   const activeCategorySlug = resolvedSearchParams.category || 'Semua';
 
@@ -25,7 +25,35 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
   
   const filteredChannels = activeCategorySlug === 'Semua' 
     ? streams 
-    : streams.filter((s: any) => s.id_category === activeCategory?.id);
+    : streams.filter((s: any) => Number(s.id_category) === Number(activeCategory?.id));
+
+  // Pagination Logic
+  const itemsPerPage = 20; // 4x5 grid
+  const totalPages = Math.max(1, Math.ceil(filteredChannels.length / itemsPerPage));
+  const requestedPage = Number.parseInt(resolvedSearchParams.page || '1', 10);
+  const currentPage = Number.isNaN(requestedPage) ? 1 : Math.min(Math.max(requestedPage, 1), totalPages);
+  const paginatedChannels = filteredChannels.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const buildPageHref = (page: number) => {
+    const params = new URLSearchParams();
+    if (activeCategorySlug !== 'Semua') params.set('category', activeCategorySlug);
+    if (page > 1) params.set('page', String(page));
+    const query = params.toString();
+    return query ? `/browse?${query}` : '/browse';
+  };
+
+  const paginationItems: Array<number | 'ellipsis'> = [];
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) paginationItems.push(i);
+  } else {
+    paginationItems.push(1);
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    if (start > 2) paginationItems.push('ellipsis');
+    for (let i = start; i <= end; i++) paginationItems.push(i);
+    if (end < totalPages - 1) paginationItems.push('ellipsis');
+    paginationItems.push(totalPages);
+  }
 
   return (
     <div className="flex flex-col h-full relative overflow-hidden animate-fade-in">
@@ -54,7 +82,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
             </div>
         </section>
 
-        {/* All Channels Grid */}
+        {/* Channels Grid */}
         <section>
           <div className="flex items-center justify-between mb-8">
             <h2 className="text-xl font-black text-gray-900 flex items-center gap-2">
@@ -63,8 +91,8 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
             </h2>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-            {filteredChannels.map((channel: any) => (
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 lg:grid-rows-5 gap-6 md:gap-8">
+            {paginatedChannels.map((channel: any) => (
               <Link key={channel.id} href={`/${channel.slug}`} className="group bg-white rounded-[2rem] p-3 shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 border border-white hover:border-blue-100 flex flex-col">
                 <div className="relative w-full aspect-[4/3] rounded-[1.5rem] overflow-hidden mb-4 bg-gray-100">
                   <img src={channel.image_url} alt={channel.name} className="absolute inset-0 w-full h-full object-contain p-8 transition-transform duration-700 group-hover:scale-110" />
@@ -87,6 +115,53 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
               </Link>
             ))}
           </div>
+
+          {/* Pagination UI */}
+          {totalPages > 1 && (
+            <div className="mt-12 flex items-center justify-center gap-2 flex-wrap">
+              <Link
+                href={buildPageHref(currentPage - 1)}
+                aria-disabled={currentPage === 1}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                  currentPage === 1
+                    ? 'pointer-events-none bg-gray-100 text-gray-400'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                Prev
+              </Link>
+
+              {paginationItems.map((item, index) => (
+                item === 'ellipsis' ? (
+                  <span key={`el-${index}`} className="px-2 text-gray-400 text-sm font-semibold">...</span>
+                ) : (
+                  <Link
+                    key={item}
+                    href={buildPageHref(item)}
+                    className={`min-w-10 px-3 py-2 rounded-xl text-sm font-semibold text-center transition-colors ${
+                      currentPage === item
+                        ? 'bg-gray-900 text-white shadow-lg shadow-gray-900/20'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    {item}
+                  </Link>
+                )
+              ))}
+
+              <Link
+                href={buildPageHref(currentPage + 1)}
+                aria-disabled={currentPage === totalPages}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                  currentPage === totalPages
+                    ? 'pointer-events-none bg-gray-100 text-gray-400'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                Next
+              </Link>
+            </div>
+          )}
         </section>
       </main>
     </div>

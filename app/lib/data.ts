@@ -4,7 +4,7 @@ const API_BASE = "https://streamku-kappa.vercel.app";
 
 export const getStreams = cache(async () => {
   try {
-    const res = await fetch(`${API_BASE}/stream.json`, { next: { revalidate: 60 } });
+    const res = await fetch(`${API_BASE}/stream.json`, { cache: 'no-store' });
     if (!res.ok) throw new Error("Failed to fetch streams");
     return res.json();
   } catch (error) {

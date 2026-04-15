@@ -31,7 +31,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   const searchQuery = resolvedSearchParams.q?.toLowerCase() || '';
 
   const filteredChannels = streams.filter((channel: any) => {
-    const matchesCategory = activeCategorySlug === 'Semua' || channel.id_category === activeCategory?.id;
+    const matchesCategory = activeCategorySlug === 'Semua' || Number(channel.id_category) === Number(activeCategory?.id);
     const matchesSearch = !searchQuery || channel.name.toLowerCase().includes(searchQuery);
     return matchesCategory && matchesSearch;
   });
