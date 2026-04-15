@@ -1,6 +1,6 @@
 import { cache } from 'react';
 
-const API_BASE = "https://streamku.netlify.app";
+const API_BASE = "https://streamku-kappa.vercel.app";
 
 export const getStreams = cache(async () => {
   try {

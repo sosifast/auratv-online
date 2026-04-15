@@ -13,7 +13,7 @@ import {
   MonitorPlay
 } from 'lucide-react';
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string, q?: string }> }) {
+export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string, q?: string, page?: string }> }) {
   const resolvedSearchParams = await searchParams;
   const activeCategorySlug = resolvedSearchParams.category || 'Semua';
 
@@ -35,6 +35,42 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
     const matchesSearch = !searchQuery || channel.name.toLowerCase().includes(searchQuery);
     return matchesCategory && matchesSearch;
   });
+
+  const itemsPerPage = 16;
+  const totalPages = Math.max(1, Math.ceil(filteredChannels.length / itemsPerPage));
+  const requestedPage = Number.parseInt(resolvedSearchParams.page || '1', 10);
+  const currentPage = Number.isNaN(requestedPage) ? 1 : Math.min(Math.max(requestedPage, 1), totalPages);
+  const paginatedChannels = filteredChannels.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  const buildPageHref = (page: number) => {
+    const params = new URLSearchParams();
+
+    if (activeCategorySlug !== 'Semua') params.set('category', activeCategorySlug);
+    if (resolvedSearchParams.q) params.set('q', resolvedSearchParams.q);
+    if (page > 1) params.set('page', String(page));
+
+    const query = params.toString();
+    return query ? `/?${query}` : '/';
+  };
+
+  const paginationItems: Array<number | 'ellipsis'> = [];
+  if (totalPages <= 7) {
+    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+      paginationItems.push(pageNumber);
+    }
+  } else {
+    paginationItems.push(1);
+
+    const startPage = Math.max(2, currentPage - 1);
+    const endPage = Math.min(totalPages - 1, currentPage + 1);
+
+    if (startPage > 2) paginationItems.push('ellipsis');
+    for (let pageNumber = startPage; pageNumber <= endPage; pageNumber += 1) {
+      paginationItems.push(pageNumber);
+    }
+    if (endPage < totalPages - 1) paginationItems.push('ellipsis');
+
+    paginationItems.push(totalPages);
+  }
 
   return (
     <div className="flex flex-col h-full relative overflow-hidden animate-fade-in">
@@ -91,9 +127,9 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             </button>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
             {filteredChannels.length > 0 ? (
-              filteredChannels.map((channel: any) => (
+              paginatedChannels.map((channel: any) => (
                 <Link key={channel.id} href={`/${channel.slug}`} className="group bg-white rounded-[2rem] p-3 shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 border border-white hover:border-blue-100 flex flex-col">
                   <div className="relative w-full aspect-[4/3] rounded-[1.5rem] overflow-hidden mb-4 bg-gray-100">
                     <img src={channel.image_url} alt={channel.name} className="absolute inset-0 w-full h-full object-contain p-8 transition-transform duration-700 group-hover:scale-110" />
@@ -128,6 +164,58 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
               </div>
             )}
           </div>
+
+          {totalPages > 1 && (
+            <div className="mt-8 flex items-center justify-center gap-2 flex-wrap">
+              <Link
+                href={buildPageHref(currentPage - 1)}
+                aria-disabled={currentPage === 1}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                  currentPage === 1
+                    ? 'pointer-events-none bg-gray-100 text-gray-400'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                Prev
+              </Link>
+
+              {paginationItems.map((item, index) => {
+                if (item === 'ellipsis') {
+                  return (
+                    <span key={`ellipsis-${index}`} className="px-2 text-gray-400 text-sm font-semibold">
+                      ...
+                    </span>
+                  );
+                }
+
+                return (
+                  <Link
+                    key={item}
+                    href={buildPageHref(item)}
+                    className={`min-w-10 px-3 py-2 rounded-xl text-sm font-semibold text-center transition-colors ${
+                      currentPage === item
+                        ? 'bg-gray-900 text-white'
+                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                    }`}
+                  >
+                    {item}
+                  </Link>
+                );
+              })}
+
+              <Link
+                href={buildPageHref(currentPage + 1)}
+                aria-disabled={currentPage === totalPages}
+                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
+                  currentPage === totalPages
+                    ? 'pointer-events-none bg-gray-100 text-gray-400'
+                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+                }`}
+              >
+                Next
+              </Link>
+            </div>
+          )}
         </section>
 
         {/* Featured Recommendations Section */}
