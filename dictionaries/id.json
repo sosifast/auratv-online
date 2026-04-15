@@ -10,6 +10,23 @@
     "watch_now": "Mulai Nonton",
     "back": "Kembali",
     "all": "Semua",
-    "viewers": "Penonton"
+    "viewers": "Penonton",
+    "live_chat": "Obrolan Langsung",
+    "subscribe": "Langganan",
+    "up_next": "Selanjutnya",
+    "welcome_chat": "Selamat datang di obrolan!",
+    "select_server": "Pilih Server",
+    "donation": "Donasi",
+    "updated_now": "Update Menit Ini",
+    "most_watched_today": "Siaran Paling Banyak Ditonton Hari Ini",
+    "recently_watched": "Baru Saja Ditonton",
+    "favorites": "Favorit Saya",
+    "donation_title": "Dukung AuraTV",
+    "donation_desc": "Dukungan Anda membantu kami menjaga siaran tetap aktif dan terus memberikan konten berkualitas tinggi kepada penonton di seluruh dunia. Setiap kontribusi sangat berarti.",
+    "scan_qr": "Pindai QR ini untuk donasi",
+    "account_address": "Akun / Alamat",
+    "donate_with": "Donasi dengan",
+    "recommendations": "Rekomendasi Untukmu",
+    "badge_recommended": "Unggulan"
   }
 }

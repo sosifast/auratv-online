@@ -1,0 +1,29 @@
+[
+    {
+        "id": "12345",
+        "name": "Qris",
+        "image_icon": "https://example.com/icon.png",
+        "image_qr_url": "https://example.com/qr.png"
+    },
+    {
+        "id": "12345",
+        "name": "Paypal",
+        "image_icon": "https://example.com/icon.png",
+        "account": "infoduit95@gmail.com"
+    },
+    {
+        "id": "12345",
+        "name": "BTC",
+        "image_icon": "https://example.com/icon.png",
+        "account": "infoduit95@gmail.com",
+        "image_qr_url": "https://example.com/qr.png"
+    },
+    {
+        "id": "12345",
+        "name": "ETH",
+        "network": "ERC20",
+        "image_icon": "https://example.com/icon.png",
+        "account": "infoduit95@gmail.com",
+        "image_qr_url": "https://example.com/qr.png"
+    }
+]

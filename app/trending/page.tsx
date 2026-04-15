@@ -36,9 +36,9 @@ export default async function TrendingPage() {
                 <div className="relative z-10 max-w-xl">
                     <div className="flex items-center gap-2 mb-4">
                         <TrendingUp size={16} className="text-blue-400" />
-                        <span className="text-xs font-black text-blue-400 uppercase tracking-widest">Update Menit Ini</span>
+                        <span className="text-xs font-black text-blue-400 uppercase tracking-widest">{dict.common.updated_now}</span>
                     </div>
-                    <h2 className="text-4xl font-extrabold text-white mb-6 leading-tight">Siaran Paling Banyak Ditonton Hari Ini</h2>
+                    <h2 className="text-4xl font-extrabold text-white mb-6 leading-tight">{dict.common.most_watched_today}</h2>
                 </div>
                 <div className="absolute right-[-10%] bottom-[-20%] scale-150 opacity-10 rotate-12">
                     <Flame size={400} />

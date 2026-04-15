@@ -11,7 +11,8 @@ import {
   MonitorPlay,
   Globe,
   ChevronDown,
-  Check
+  Check,
+  Heart
 } from 'lucide-react';
 import { useTranslation } from './I18nProvider';
 
@@ -29,7 +30,7 @@ const NavItem = ({ icon: Icon, label, path, active }: { icon: any, label: string
   </Link>
 );
 
-export default function Navbar() {
+export default function Navbar({ setup }: { setup: any }) {
   const pathname = usePathname();
   const { t, locale, setLocale } = useTranslation();
   const [isLangOpen, setIsLangOpen] = useState(false);
@@ -51,12 +52,16 @@ export default function Navbar() {
     <nav className="order-2 md:order-1 w-full md:w-72 bg-white/60 backdrop-blur-2xl border-t md:border-t-0 md:border-r border-white flex flex-row md:flex-col justify-around md:justify-start p-2 md:p-6 z-50 shrink-0 shadow-[4px_0_24px_rgba(0,0,0,0.02)]">
       
       {/* Logo (Desktop Only) */}
-      <div className="hidden md:flex items-center gap-3 mb-10 px-2">
-        <div className="w-10 h-10 bg-gradient-to-tr from-blue-600 to-cyan-500 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-200">
-          <MonitorPlay size={20} className="text-white" />
-        </div>
-        <Link href="/" className="text-2xl font-extrabold tracking-tight text-gray-900">
-          Vision<span className="text-blue-600">Pro</span>
+      <div className="hidden md:flex items-center mb-10 px-2">
+        <Link href="/" className="w-full h-16 flex items-center">
+          {setup.logo_url ? (
+            <img src={setup.logo_url} alt={setup.sitename} className="w-full h-full object-contain object-left" />
+          ) : (
+            <div className="flex items-center gap-2">
+              <MonitorPlay size={24} className="text-blue-600" />
+              <span className="text-xl font-black text-gray-900">{setup.sitename}</span>
+            </div>
+          )}
         </Link>
       </div>
 
@@ -105,6 +110,7 @@ export default function Navbar() {
         <NavItem icon={Compass} label={t('common.browse')} path="/browse" active={pathname === '/browse'} />
         <NavItem icon={Flame} label={t('common.trending')} path="/trending" active={pathname === '/trending'} />
         <NavItem icon={Library} label={t('common.library')} path="/library" active={pathname === '/library'} />
+        <NavItem icon={Heart} label={t('common.donation')} path="/page/donation" active={pathname === '/page/donation'} />
       </div>
 
     </nav>
