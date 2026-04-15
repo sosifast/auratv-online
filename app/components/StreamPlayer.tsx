@@ -11,13 +11,19 @@ interface StreamPlayerProps {
   };
 }
 
+interface StreamServer {
+  id: string;
+  name: string;
+  url: string;
+}
+
 export default function StreamPlayer({ channel, labels }: StreamPlayerProps) {
-  const [servers, setServers] = useState<any[]>([]);
-  const [activeServer, setActiveServer] = useState<any>(null);
+  const [servers, setServers] = useState<StreamServer[]>([]);
+  const [activeServer, setActiveServer] = useState<StreamServer | null>(null);
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
-    const extractedServers = [];
+    const extractedServers: StreamServer[] = [];
     
     // 1. Check for standard keys
     if (channel.url_stream) {
