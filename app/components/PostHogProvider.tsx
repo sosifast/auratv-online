@@ -9,6 +9,7 @@ if (typeof window !== 'undefined') {
     api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com',
     person_profiles: 'identified_only', 
     capture_pageview: false,
+    // @ts-ignore
     capture_errors: true // Enable automatic exception tracking
   })
 }
