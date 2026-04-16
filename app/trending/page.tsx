@@ -1,6 +1,7 @@
 import { getStreams, getCategories } from '../lib/data';
 import { getDictionary } from '../lib/dictionary';
 import { cookies } from 'next/headers';
+import { Popunder, NativeBanner } from '../components/Ads';
 import Link from 'next/link';
 import { 
   Flame,
@@ -21,6 +22,7 @@ export default async function TrendingPage() {
 
   return (
     <div className="flex flex-col h-full relative overflow-hidden animate-fade-in">
+      <Popunder />
       <header className="h-24 px-6 md:px-12 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-3">
             <div className="bg-red-600/10 p-2 rounded-xl text-red-600">
@@ -31,20 +33,9 @@ export default async function TrendingPage() {
       </header>
 
       <main className="flex-1 overflow-y-auto px-6 md:px-12 pb-24 scrollbar-hide">
-        <section className="mb-12">
-            <div className="bg-gradient-to-br from-gray-900 to-blue-900 rounded-[2.5rem] p-10 relative overflow-hidden">
-                <div className="relative z-10 max-w-xl">
-                    <div className="flex items-center gap-2 mb-4">
-                        <TrendingUp size={16} className="text-blue-400" />
-                        <span className="text-xs font-black text-blue-400 uppercase tracking-widest">{dict.common.updated_now}</span>
-                    </div>
-                    <h2 className="text-4xl font-extrabold text-white mb-6 leading-tight">{dict.common.most_watched_today}</h2>
-                </div>
-                <div className="absolute right-[-10%] bottom-[-20%] scale-150 opacity-10 rotate-12">
-                    <Flame size={400} />
-                </div>
-            </div>
-        </section>
+        
+        <NativeBanner />
+
 
         <section className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {trendingStreams.map((channel: any, index: number) => (

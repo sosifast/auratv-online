@@ -1,6 +1,7 @@
 import { getStreams, getCategories } from '../lib/data';
 import { getDictionary } from '../lib/dictionary';
 import { cookies } from 'next/headers';
+import { Popunder, NativeBanner } from '../components/Ads';
 import Link from 'next/link';
 import { 
   Library,
@@ -24,6 +25,7 @@ export default async function LibraryPage() {
 
   return (
     <div className="flex flex-col h-full relative overflow-hidden animate-fade-in">
+      <Popunder />
       <header className="h-24 px-6 md:px-12 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-3">
             <div className="bg-purple-600/10 p-2.5 rounded-2xl text-purple-600">
@@ -35,6 +37,8 @@ export default async function LibraryPage() {
 
       <main className="flex-1 overflow-y-auto px-6 md:px-12 pb-24 scrollbar-hide">
         
+        <NativeBanner />
+
         {/* Recently Watched */}
         <section className="mb-14">
             <h2 className="text-sm font-black text-gray-400 uppercase tracking-widest mb-6 flex items-center gap-2">

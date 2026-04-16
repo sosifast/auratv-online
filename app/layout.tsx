@@ -2,8 +2,11 @@ import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import { cookies } from "next/headers";
 import "./globals.css";
+import { Suspense } from "react";
 import Navbar from "./components/Navbar";
 import { I18nProvider } from "./components/I18nProvider";
+import { CSPostHogProvider } from "./components/PostHogProvider";
+import PostHogPageView from "./components/PostHogPageView";
 import { getSetup } from "./lib/data";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -57,14 +60,19 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body className={inter.className}>
-        <I18nProvider initialLocale={locale}>
-          <div className="flex flex-col md:flex-row h-screen bg-[#f5f5f7] overflow-hidden">
-            <Navbar setup={setup} />
-            <div className="order-1 md:order-2 flex-1 flex flex-col h-full relative overflow-hidden">
-              {children}
+        <CSPostHogProvider>
+          <I18nProvider initialLocale={locale}>
+            <Suspense>
+              <PostHogPageView />
+            </Suspense>
+            <div className="flex flex-col md:flex-row h-screen bg-[#f5f5f7] overflow-hidden">
+              <Navbar setup={setup} />
+              <div className="order-1 md:order-2 flex-1 flex flex-col h-full relative overflow-hidden">
+                {children}
+              </div>
             </div>
-          </div>
-        </I18nProvider>
+          </I18nProvider>
+        </CSPostHogProvider>
       </body>
     </html>
   );

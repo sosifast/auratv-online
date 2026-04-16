@@ -1,19 +1,28 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Search } from 'lucide-react';
+import { usePostHog } from 'posthog-js/react';
 
 export default function SearchBar({ placeholder }: { placeholder: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [query, setQuery] = useState(searchParams.get('q') || '');
+  const posthog = usePostHog();
 
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       const params = new URLSearchParams(searchParams.toString());
       if (query) {
         params.set('q', query);
+        
+        // Track search event
+        if (posthog) {
+          posthog.capture('search_performed', {
+            search_query: query
+          });
+        }
       } else {
         params.delete('q');
       }
@@ -28,7 +37,7 @@ export default function SearchBar({ placeholder }: { placeholder: string }) {
     }, 500);
 
     return () => clearTimeout(delayDebounceFn);
-  }, [query, router, searchParams]);
+  }, [query, router, searchParams, posthog]);
 
   return (
     <div className="w-full max-w-md relative group hidden md:block">

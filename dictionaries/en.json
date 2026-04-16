@@ -16,16 +16,10 @@
     "up_next": "Up Next",
     "welcome_chat": "Welcome to the chat!",
     "select_server": "Select Server",
-    "donation": "Donation",
     "updated_now": "Updated Just Now",
     "most_watched_today": "Most Watched Streams Today",
     "recently_watched": "Recently Watched",
     "favorites": "My Favorites",
-    "donation_title": "Support AuraTV",
-    "donation_desc": "Your support helps us keep the stream alive and continue delivering high-quality content to viewers around the world. Every contribution makes a difference.",
-    "scan_qr": "Scan this QR to donate",
-    "account_address": "Account / Address",
-    "donate_with": "Donate with",
     "recommendations": "Recommendations For You",
     "badge_recommended": "Featured"
   }

@@ -110,7 +110,6 @@ export default function Navbar({ setup }: { setup: any }) {
         <NavItem icon={Compass} label={t('common.browse')} path="/browse" active={pathname === '/browse'} />
         <NavItem icon={Flame} label={t('common.trending')} path="/trending" active={pathname === '/trending'} />
         <NavItem icon={Library} label={t('common.library')} path="/library" active={pathname === '/library'} />
-        <NavItem icon={Heart} label={t('common.donation')} path="/page/donation" active={pathname === '/page/donation'} />
       </div>
 
     </nav>

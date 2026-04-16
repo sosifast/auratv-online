@@ -35,16 +35,6 @@ export const getCategories = cache(async () => {
   }
 });
 
-export const getDonations = cache(async () => {
-  try {
-    const res = await fetch(`${API_BASE}/donation.json`, { next: { revalidate: 60 } });
-    if (!res.ok) throw new Error("Failed to fetch donations");
-    return res.json();
-  } catch (error) {
-    console.error(error);
-    return [];
-  }
-});
 
 
 export async function getStreamBySlug(slug: string) {

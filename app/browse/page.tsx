@@ -1,6 +1,7 @@
 import { getStreams, getCategories } from '../lib/data';
 import { getDictionary } from '../lib/dictionary';
 import { cookies } from 'next/headers';
+import { Popunder, NativeBanner } from '../components/Ads';
 import Link from 'next/link';
 import { 
   Search, 
@@ -57,6 +58,7 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
 
   return (
     <div className="flex flex-col h-full relative overflow-hidden animate-fade-in">
+      <Popunder />
       <header className="h-24 px-6 md:px-12 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-3">
             <div className="bg-blue-600/10 p-2 rounded-xl text-blue-600">
@@ -81,6 +83,8 @@ export default async function BrowsePage({ searchParams }: { searchParams: Promi
                 ))}
             </div>
         </section>
+
+        <NativeBanner />
 
         {/* Channels Grid */}
         <section>

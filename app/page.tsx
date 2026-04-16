@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import Link from 'next/link';
 import BannerSlider from './components/BannerSlider';
 import SearchBar from './components/SearchBar';
+import { Popunder, NativeBanner } from './components/Ads';
 import {
   Search,
   PlayCircle,
@@ -74,6 +75,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
 
   return (
     <div className="flex flex-col h-full relative overflow-hidden animate-fade-in">
+      <Popunder />
       {/* Header / Top Bar */}
       <header className="h-24 px-6 md:px-12 flex items-center justify-between shrink-0 z-20">
         <SearchBar placeholder={dict.common.search} />
@@ -117,6 +119,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             </Link>
           ))}
         </section>
+
+        <NativeBanner />
 
         {/* Grid Content */}
         <section className="mb-12">
@@ -218,6 +222,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
           )}
         </section>
 
+        <NativeBanner />
+
         {/* Featured Recommendations Section */}
         <section className="mb-14">
           <div className="flex items-center justify-between mb-8">
@@ -246,6 +252,8 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             ))}
           </div>
         </section>
+
+        <NativeBanner />
 
         {/* Trending Grid */}
         <section>

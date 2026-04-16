@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import VideoPlayer from './VideoPlayer';
 import { Server, ChevronDown, Check } from 'lucide-react';
+import { usePostHog } from 'posthog-js/react';
 
 interface StreamPlayerProps {
   channel: any;
@@ -21,6 +22,18 @@ export default function StreamPlayer({ channel, labels }: StreamPlayerProps) {
   const [servers, setServers] = useState<StreamServer[]>([]);
   const [activeServer, setActiveServer] = useState<StreamServer | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const posthog = usePostHog();
+
+  // Track playback events
+  useEffect(() => {
+    if (activeServer && posthog) {
+      posthog.capture('play_stream', {
+        channel_name: channel.name,
+        server_name: activeServer.name,
+        stream_url: activeServer.url
+      });
+    }
+  }, [activeServer, posthog, channel.name]);
 
   useEffect(() => {
     const extractedServers: StreamServer[] = [];

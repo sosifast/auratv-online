@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { getDictionary } from '../lib/dictionary';
+import { Banner728x90, Banner300x250 } from '../components/Ads';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,6 +63,7 @@ export default async function WatchPage({ params }: { params: Promise<{ slug: st
     <div className="flex flex-col h-full relative overflow-hidden animate-fade-in">
       <main className="flex-1 overflow-y-auto px-6 md:px-12 pb-24 pt-8 scrollbar-hide">
         
+
         <Link href="/" className="inline-flex items-center gap-2 text-gray-500 hover:text-blue-600 mb-8 transition-all font-semibold">
           <ChevronLeft className="w-5 h-5" />
           <span>{dict.common.back}</span>
@@ -73,6 +75,8 @@ export default async function WatchPage({ params }: { params: Promise<{ slug: st
               channel={channel} 
               labels={{ select_server: dict.common.select_server || 'Pilih Server Streaming' }} 
             />
+            
+            <Banner728x90 />
             
             <div className="bg-white rounded-[2.5rem] p-8 md:p-10 shadow-sm border border-white">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-100 pb-8 mb-8">
@@ -119,20 +123,7 @@ export default async function WatchPage({ params }: { params: Promise<{ slug: st
           </div>
 
           <div className="space-y-10">
-            <div className="bg-white rounded-[2.5rem] p-8 shadow-sm border border-white">
-              <h3 className="text-xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-                <MessageCircle className="w-6 h-6 text-blue-600" /> {dict.common.live_chat || 'Live Chat'}
-              </h3>
-              <div className="h-[400px] flex flex-col gap-6 overflow-y-auto pr-4 scrollbar-hide mb-8">
-                 <p className="text-xs text-center text-gray-400 font-bold uppercase tracking-widest px-4">{dict.common.welcome_chat || 'Welcome to the chat!'}</p>
-              </div>
-              <div className="relative">
-                <input type="text" placeholder="..." className="w-full bg-gray-50 border border-gray-100 rounded-2xl px-6 py-4 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-100 transition-all pr-16" />
-                <button className="absolute right-3 top-2.5 bg-blue-600 text-white w-10 h-10 flex items-center justify-center rounded-xl shadow-lg shadow-blue-200">
-                  <PlayCircle size={20} className="fill-white" />
-                </button>
-              </div>
-            </div>
+            <Banner300x250 />
 
             <div>
               <h3 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-3">{dict.common.up_next || 'Up Next'}</h3>
