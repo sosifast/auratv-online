@@ -2,17 +2,11 @@ import { getStreams, getCategories, getSliders } from './lib/data';
 import { getDictionary } from './lib/dictionary';
 import { cookies } from 'next/headers';
 import Link from 'next/link';
-import BannerSlider from './components/BannerSlider';
+import HeroSlider from './components/HeroSlider';
 import SearchBar from './components/SearchBar';
+import LanguageSwitcher from './components/LanguageSwitcher';
 import { Popunder, NativeBanner } from './components/Ads';
-import {
-  Search,
-  PlayCircle,
-  MoreHorizontal,
-  ChevronRight,
-  User,
-  MonitorPlay
-} from 'lucide-react';
+import { PlayCircle, Play, Plus, ChevronRight, Users, Flame, Rocket, Skull, Smile, Heart, Wand2, Eye, Bell, Search, MonitorPlay } from 'lucide-react';
 
 export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string, q?: string, page?: string }> }) {
   const resolvedSearchParams = await searchParams;
@@ -42,246 +36,199 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
   const requestedPage = Number.parseInt(resolvedSearchParams.page || '1', 10);
   const currentPage = Number.isNaN(requestedPage) ? 1 : Math.min(Math.max(requestedPage, 1), totalPages);
   const paginatedChannels = filteredChannels.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-  const buildPageHref = (page: number) => {
-    const params = new URLSearchParams();
 
-    if (activeCategorySlug !== 'Semua') params.set('category', activeCategorySlug);
-    if (resolvedSearchParams.q) params.set('q', resolvedSearchParams.q);
-    if (page > 1) params.set('page', String(page));
-
-    const query = params.toString();
-    return query ? `/?${query}` : '/';
-  };
-
-  const paginationItems: Array<number | 'ellipsis'> = [];
-  if (totalPages <= 7) {
-    for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
-      paginationItems.push(pageNumber);
-    }
-  } else {
-    paginationItems.push(1);
-
-    const startPage = Math.max(2, currentPage - 1);
-    const endPage = Math.min(totalPages - 1, currentPage + 1);
-
-    if (startPage > 2) paginationItems.push('ellipsis');
-    for (let pageNumber = startPage; pageNumber <= endPage; pageNumber += 1) {
-      paginationItems.push(pageNumber);
-    }
-    if (endPage < totalPages - 1) paginationItems.push('ellipsis');
-
-    paginationItems.push(totalPages);
-  }
+  // Static Genres matching user design, could be mapped dynamically if needed
+  const genres = [
+    { name: 'Action', color: 'from-orange-500 to-red-600', icon: Flame },
+    { name: 'Sci-Fi', color: 'from-cyan-500 to-blue-600', icon: Rocket },
+    { name: 'Horror', color: 'from-gray-600 to-gray-900', icon: Skull },
+    { name: 'Comedy', color: 'from-yellow-400 to-amber-600', icon: Smile },
+    { name: 'Romance', color: 'from-pink-400 to-rose-600', icon: Heart },
+    { name: 'Fantasy', color: 'from-violet-500 to-purple-700', icon: Wand2 },
+    { name: 'Thriller', color: 'from-emerald-500 to-teal-700', icon: Eye }
+  ];
 
   return (
-    <div className="flex flex-col h-full relative overflow-hidden animate-fade-in">
+    <>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+        body { font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+      `}</style>
       <Popunder />
-      {/* Header / Top Bar */}
-      <header className="h-24 px-6 md:px-12 flex items-center justify-between shrink-0 z-20">
-        <SearchBar placeholder={dict.common.search} />
-
-        {/* Mobile Logo */}
-        <div className="md:hidden flex items-center gap-2">
-          <div className="w-8 h-8 bg-blue-600 rounded-xl flex items-center justify-center">
-            <MonitorPlay size={16} className="text-white" />
+      
+      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden hide-scrollbar relative pb-20 md:pb-0">
+        
+        {/* TOP HEADER (Mobile Only & Tablet Search) */}
+        <header className="absolute top-0 left-0 w-full z-40 px-4 md:px-8 py-4 flex justify-between items-center bg-gradient-to-b from-[#0B0C10]/80 to-transparent">
+          <div className="md:hidden flex items-center gap-2">
+            <PlayCircle className="w-8 h-8 text-[#E50914]" />
+            <span className="text-xl font-bold tracking-wider drop-shadow-md">VERSE</span>
           </div>
-          <span className="text-xl font-bold text-gray-900">Streamku</span>
-        </div>
-      </header>
+          
+          <div className="hidden md:block flex-1"></div>
 
-      {/* Scrollable Area */}
-      <main className="flex-1 overflow-y-auto px-6 md:px-12 pb-24 scrollbar-hide">
-
-        {/* Dynamic Banner Slider */}
-        <BannerSlider sliders={sliders} />
-
-        {/* Filter Pills */}
-        <section className="mb-8 flex items-center gap-3 overflow-x-auto pb-4 scrollbar-hide -mx-6 px-6 md:mx-0 md:px-0">
-          <Link
-            href="/"
-            className={`px-6 py-2.5 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all duration-300 ${activeCategorySlug === 'Semua'
-                ? 'bg-gray-900 text-white shadow-lg shadow-gray-900/20'
-                : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-100 shadow-sm'
-              }`}
-          >
-            {dict.common.all}
-          </Link>
-          {categories.map((cat: any) => (
-            <Link
-              key={cat.id}
-              href={`/?category=${cat.slug}`}
-              className={`px-6 py-2.5 rounded-2xl text-sm font-semibold whitespace-nowrap transition-all duration-300 ${activeCategorySlug === cat.slug
-                  ? 'bg-gray-900 text-white shadow-lg shadow-gray-900/20'
-                  : 'bg-white text-gray-500 hover:bg-gray-100 border border-gray-100 shadow-sm'
-                }`}
-            >
-              {cat.name}
-            </Link>
-          ))}
-        </section>
-
-        <NativeBanner />
-
-        {/* Grid Content */}
-        <section className="mb-12">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-extrabold text-gray-900">{dict.common.live}</h2>
-            <button className="text-blue-600 font-semibold text-sm flex items-center gap-1 hover:gap-2 transition-all">
-              {dict.common.browse} <ChevronRight size={18} />
+          <div className="flex items-center gap-4">
+            <div className="hidden md:block w-72">
+              <SearchBar placeholder={dict.common.search || "Search..."} />
+            </div>
+            <button className="p-2 rounded-full bg-black/20 backdrop-blur-md hover:bg-white/20 transition-colors md:hidden">
+              <Search className="w-5 h-5 text-white" />
+            </button>
+            <LanguageSwitcher />
+            <button className="p-2 rounded-full bg-black/20 backdrop-blur-md hover:bg-white/20 transition-colors">
+              <Bell className="w-5 h-5 text-white" />
             </button>
           </div>
+        </header>
 
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {filteredChannels.length > 0 ? (
-              paginatedChannels.map((channel: any) => (
-                <Link key={channel.id} href={`/${channel.slug}`} className="group bg-white rounded-[2rem] p-3 shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 border border-white hover:border-blue-100 flex flex-col">
-                  <div className="relative w-full aspect-[4/3] rounded-[1.5rem] overflow-hidden mb-4 bg-gray-100">
-                    <img src={channel.image_url} alt={channel.name} className="absolute inset-0 w-full h-full object-contain p-8 transition-transform duration-700 group-hover:scale-110" />
-                    <div className="absolute top-3 left-3 flex gap-2">
-                      <span className="px-2.5 py-1 bg-red-500 text-white rounded-lg text-[10px] font-bold tracking-wide backdrop-blur-md">{dict.common.live}</span>
-                    </div>
-                    <div className="absolute bottom-3 left-3 px-2.5 py-1 bg-black/50 backdrop-blur-md rounded-lg text-white text-[11px] font-semibold flex items-center gap-1.5">
-                      <User size={12} /> {Math.floor(Math.random() * 900) + 10}K
-                    </div>
-                    <div className="absolute inset-0 bg-blue-900/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
-                      <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center shadow-2xl transform scale-50 group-hover:scale-100 transition-transform duration-300 ease-out">
-                        <PlayCircle size={32} className="text-blue-600 fill-blue-100" />
+        {/* HERO SLIDER */}
+        <HeroSlider sliders={sliders} />
+
+        <div className="px-4 md:px-12 -mt-4 relative z-20 pb-10 space-y-10">
+          
+          {/* GENRE SECTION */}
+          <section>
+            <div className="flex justify-between items-end mb-4">
+              <h2 className="text-xl md:text-2xl font-bold tracking-wide">Explore Genres</h2>
+            </div>
+            
+            <div className="flex overflow-x-auto gap-3 md:gap-4 snap-x snap-mandatory hide-scrollbar pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+              {genres.map((genre, idx) => {
+                const Icon = genre.icon;
+                return (
+                  <div key={idx} className="snap-start shrink-0 w-32 md:w-40 h-16 md:h-20 group cursor-pointer">
+                    <div className={`w-full h-full rounded-xl bg-gradient-to-br ${genre.color} p-[1px] shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-[#E50914]/20 group-active:scale-95`}>
+                      <div className="w-full h-full bg-[#0B0C10]/40 backdrop-blur-sm rounded-[11px] flex items-center justify-center relative overflow-hidden transition-colors duration-300 group-hover:bg-[#0B0C10]/10">
+                        <Icon className="absolute -right-2 -bottom-2 w-12 h-12 text-white opacity-10 group-hover:opacity-20 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500" />
+                        <div className="relative z-10">
+                          <span className="font-bold text-sm md:text-base text-white tracking-wide drop-shadow-md">{genre.name}</span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <div className="px-3 pb-2 flex justify-between items-start">
-                    <div>
-                      <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">{channel.name}</h3>
-                      <p className="text-sm font-medium text-gray-500">{categories.find((c: any) => c.id === channel.id_category)?.name || 'General'} • HD</p>
+                )
+              })}
+            </div>
+          </section>
+
+          <NativeBanner />
+
+          {/* REKOMENDASI SECTION */}
+          <section>
+            <div className="flex justify-between items-end mb-4">
+              <h2 className="text-xl md:text-2xl font-bold tracking-wide">{dict.common.recommendations || "Recommended for You"}</h2>
+              <a href="#" className="text-[#E50914] text-sm font-medium hover:underline flex items-center">
+                See All <ChevronRight className="w-4 h-4" />
+              </a>
+            </div>
+            
+            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory hide-scrollbar pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+              {streams.slice(4, 10).map((channel: any, idx: number) => (
+                <Link href={`/${channel.slug}`} key={channel.id} className="snap-start shrink-0 w-36 md:w-48 lg:w-56 group relative cursor-pointer block">
+                  <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-105 group-hover:ring-2 ring-[#E50914]">
+                    <img src={channel.image_url} alt={channel.name} className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-70 bg-[#1F2833]" />
+                    
+                    {/* Play Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                      <div className="bg-[#E50914] rounded-full p-3 shadow-lg shadow-[#E50914]/50">
+                        <Play className="w-6 h-6 fill-white text-white" />
+                      </div>
                     </div>
-                    <button className="p-2 -mr-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"><MoreHorizontal size={20} /></button>
+                    
+                    {/* Badge */}
+                    {idx === 0 && (
+                      <div className="absolute top-2 left-2 bg-[#E50914] text-white text-[10px] font-bold px-2 py-1 rounded">
+                        New
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="mt-2 text-sm md:text-base font-medium truncate">{channel.name}</h3>
+                </Link>
+              ))}
+            </div>
+          </section>
+
+          {/* LIVE TV SECTION */}
+          <section>
+            <div className="flex justify-between items-end mb-4">
+              <h2 className="text-xl md:text-2xl font-bold tracking-wide">{dict.common.live || "Live Channels"}</h2>
+            </div>
+            
+            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory hide-scrollbar pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+              {paginatedChannels.slice(0, 8).map((channel: any) => (
+                <Link href={`/${channel.slug}`} key={channel.id} className="snap-start shrink-0 w-56 md:w-72 group relative cursor-pointer block">
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg transition-all duration-300 group-hover:scale-105 ring-1 ring-white/10 group-hover:ring-[#E50914]">
+                    <img src={channel.image_url} alt={channel.name} className="w-full h-full object-cover bg-[#1F2833]" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
+                    
+                    {/* Live Badge */}
+                    <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-[#E50914] text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg">
+                      <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                      LIVE
+                    </div>
+
+                    {/* Viewers */}
+                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-1 rounded flex items-center gap-1">
+                      <Users className="w-3 h-3" /> {Math.floor(Math.random() * 900) + 10}K
+                    </div>
+                    
+                    <div className="absolute bottom-3 left-3 right-3">
+                      <h3 className="text-sm md:text-base font-bold text-white truncate">{channel.name}</h3>
+                      <p className="text-[10px] md:text-xs text-[#E50914] font-medium truncate mt-0.5">Live Now</p>
+                    </div>
+                    
+                    {/* Play Icon Overlay */}
+                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40">
+                      <div className="bg-[#E50914] rounded-full p-3 shadow-lg shadow-[#E50914]/50 scale-90 group-hover:scale-100 transition-transform">
+                        <Play className="w-6 h-6 fill-white text-white" />
+                      </div>
+                    </div>
                   </div>
                 </Link>
-              ))
-            ) : (
-              <div className="col-span-full py-20 text-center">
-                <div className="inline-flex p-6 bg-gray-100 rounded-3xl mb-4">
-                  <Search size={40} className="text-gray-400" />
-                </div>
-                <h3 className="text-xl font-bold text-gray-900">Tidak ada saluran ditemukan</h3>
-                <p className="text-gray-500 mt-2">Coba gunakan kata kunci lain atau pilih kategori yang berbeda.</p>
-              </div>
-            )}
-          </div>
+              ))}
+            </div>
+          </section>
 
-          {totalPages > 1 && (
-            <div className="mt-8 flex items-center justify-center gap-2 flex-wrap">
-              <Link
-                href={buildPageHref(currentPage - 1)}
-                aria-disabled={currentPage === 1}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                  currentPage === 1
-                    ? 'pointer-events-none bg-gray-100 text-gray-400'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                }`}
-              >
-                Prev
-              </Link>
+          <NativeBanner />
 
-              {paginationItems.map((item, index) => {
-                if (item === 'ellipsis') {
-                  return (
-                    <span key={`ellipsis-${index}`} className="px-2 text-gray-400 text-sm font-semibold">
-                      ...
-                    </span>
-                  );
-                }
-
+          {/* CATEGORIES SECTION */}
+          <section>
+            <div className="flex justify-between items-end mb-4">
+              <h2 className="text-xl md:text-2xl font-bold tracking-wide">Categories</h2>
+            </div>
+            
+            <div className="flex overflow-x-auto gap-3 md:gap-4 snap-x snap-mandatory hide-scrollbar pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+              {categories.slice(0, 8).map((cat: any, idx: number) => {
+                const colors = [
+                  'from-blue-500 to-indigo-600',
+                  'from-purple-500 to-fuchsia-600',
+                  'from-emerald-500 to-teal-600',
+                  'from-orange-500 to-red-600',
+                  'from-pink-500 to-rose-600',
+                  'from-cyan-500 to-blue-600',
+                  'from-yellow-500 to-amber-600',
+                  'from-violet-500 to-purple-600',
+                ];
+                const color = colors[idx % colors.length];
                 return (
-                  <Link
-                    key={item}
-                    href={buildPageHref(item)}
-                    className={`min-w-10 px-3 py-2 rounded-xl text-sm font-semibold text-center transition-colors ${
-                      currentPage === item
-                        ? 'bg-gray-900 text-white'
-                        : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                    }`}
-                  >
-                    {item}
+                  <Link href={`/?category=${cat.slug}`} key={cat.id} className="snap-start shrink-0 w-32 md:w-40 h-16 md:h-20 group cursor-pointer block">
+                    <div className={`w-full h-full rounded-xl bg-gradient-to-br ${color} p-[1px] shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-[#E50914]/20 group-active:scale-95`}>
+                      <div className="w-full h-full bg-[#0B0C10]/40 backdrop-blur-sm rounded-[11px] flex items-center justify-center relative overflow-hidden transition-colors duration-300 group-hover:bg-[#0B0C10]/10">
+                        <MonitorPlay className="absolute -right-2 -bottom-2 w-12 h-12 text-white opacity-10 group-hover:opacity-20 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500" />
+                        <div className="relative z-10 px-2 text-center">
+                          <span className="font-bold text-sm md:text-base text-white tracking-wide drop-shadow-md line-clamp-1">{cat.name}</span>
+                        </div>
+                      </div>
+                    </div>
                   </Link>
                 );
               })}
-
-              <Link
-                href={buildPageHref(currentPage + 1)}
-                aria-disabled={currentPage === totalPages}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition-colors ${
-                  currentPage === totalPages
-                    ? 'pointer-events-none bg-gray-100 text-gray-400'
-                    : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
-                }`}
-              >
-                Next
-              </Link>
             </div>
-          )}
-        </section>
-
-        <NativeBanner />
-
-        {/* Featured Recommendations Section */}
-        <section className="mb-14">
-          <div className="flex items-center justify-between mb-8">
-            <h2 className="text-2xl font-extrabold text-gray-900 leading-none">{dict.common.recommendations}</h2>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
-            {streams.slice(4, 8).map((channel: any) => (
-              <Link key={`feat-${channel.id}`} href={`/${channel.slug}`} className="group bg-white rounded-[2rem] p-3 shadow-[0_8px_24px_rgba(0,0,0,0.04)] hover:shadow-[0_20px_40px_-15px_rgba(0,0,0,0.1)] transition-all duration-300 border border-white hover:border-blue-100 flex flex-col">
-                <div className="relative w-full aspect-[4/3] rounded-[1.5rem] overflow-hidden mb-4 bg-gray-50 flex items-center justify-center">
-                  <img src={channel.image_url} alt={channel.name} className="w-full h-full object-contain p-8 transition-transform duration-700 group-hover:scale-110" />
-                  <div className="absolute top-3 left-3">
-                    <span className="px-2 py-0.5 bg-blue-600 text-white rounded-md text-[9px] font-black uppercase tracking-widest">{dict.common.badge_recommended}</span>
-                  </div>
-                  <div className="absolute inset-0 bg-blue-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[1px]">
-                    <div className="w-12 h-12 bg-white/90 rounded-full flex items-center justify-center shadow-xl transform scale-50 group-hover:scale-100 transition-transform duration-300 ease-out">
-                      <PlayCircle size={24} className="text-blue-600" />
-                    </div>
-                  </div>
-                </div>
-                <div className="px-2">
-                  <h3 className="font-bold text-gray-900 text-sm leading-tight mb-1 group-hover:text-blue-600 transition-colors line-clamp-1">{channel.name}</h3>
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{categories.find((c: any) => c.id === channel.id_category)?.name || 'General'}</p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-
-        <NativeBanner />
-
-        {/* Trending Grid */}
-        <section>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-2xl font-extrabold text-gray-900">{dict.common.trending}</h2>
-          </div>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
-            {streams.slice(0, 4).map((channel: any) => (
-              <Link key={`rec-${channel.id}`} href={`/${channel.slug}`} className="group bg-white rounded-[2rem] p-4 shadow-[0_8px_24px_rgba(0,0,0,0.04)] border border-white hover:border-blue-100 transition-all">
-                <div className="relative aspect-video rounded-2xl overflow-hidden mb-4 bg-gray-50 flex items-center justify-center p-6">
-                  <img
-                    src={channel.image_url}
-                    alt={channel.name}
-                    className="w-full h-full object-contain transition-transform duration-700 group-hover:scale-110"
-                  />
-                  <div className="absolute inset-0 bg-blue-900/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                </div>
-                <div className="px-1">
-                  <h3 className="text-gray-900 font-bold text-sm leading-tight mb-1 line-clamp-1">{channel.name}</h3>
-                  <p className="text-gray-400 text-[10px] font-bold uppercase tracking-widest">
-                    {categories.find((c: any) => c.id === channel.id_category)?.name || 'GENERAL'}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
+          </section>
+        </div>
       </main>
-    </div>
+    </>
   );
 }

@@ -41,13 +41,13 @@ export default function SearchBar({ placeholder }: { placeholder: string }) {
 
   return (
     <div className="w-full max-w-md relative group hidden md:block">
-      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-[#E50914] transition-colors" size={20} />
       <input 
         type="text" 
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={placeholder}
-        className="w-full bg-white/80 backdrop-blur-md border border-white shadow-sm pl-12 pr-4 py-3.5 rounded-2xl text-sm font-medium text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-blue-100 transition-all"
+        className="w-full bg-black/20 backdrop-blur-md border border-white/10 shadow-sm pl-12 pr-4 py-2.5 md:py-3 rounded-full text-sm font-medium text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#E50914]/50 focus:border-transparent transition-all"
       />
     </div>
   );

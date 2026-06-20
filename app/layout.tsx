@@ -53,7 +53,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   const cookieStore = await cookies();
-  const locale = cookieStore.get("locale")?.value || "id";
+  const locale = cookieStore.get("locale")?.value || "en";
 
   const setup = await getSetup();
 
@@ -65,11 +65,9 @@ export default async function RootLayout({
             <Suspense>
               <PostHogPageView />
             </Suspense>
-            <div className="flex flex-col md:flex-row h-screen bg-[#f5f5f7] overflow-hidden">
+            <div className="flex h-screen overflow-hidden antialiased bg-[#0B0C10] text-white font-sans selection:bg-[#E50914]/30">
               <Navbar setup={setup} />
-              <div className="order-1 md:order-2 flex-1 flex flex-col h-full relative overflow-hidden">
-                {children}
-              </div>
+              {children}
             </div>
           </I18nProvider>
         </CSPostHogProvider>
