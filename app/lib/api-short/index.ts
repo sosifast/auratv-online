@@ -59,13 +59,15 @@ export async function getShortStreams(): Promise<ShortStream[]> {
  */
 export async function getShortEpisodes(): Promise<ShortEpisode[]> {
   try {
+    const streams = await getShortStreams();
     // Raw episode record dari API (s1-s100 dll.)
     const raw = await fetchApiArray<Record<string, string>>(`${API_BASE}/short/episode.json`);
     
     const allEpisodes: ShortEpisode[] = [];
     
-    for (const ep of raw) {
-      const id_stream = ep["id_stream"] ?? "";
+    for (let idx = 0; idx < raw.length; idx++) {
+      const ep = raw[idx];
+      const id_stream = ep["id_stream"] ?? streams[idx]?.id ?? "";
       // Setiap s1, s2, s3... adalah episode yang berbeda
       for (let i = 1; i <= 100; i++) {
         const val = ep[`s${i}`];
