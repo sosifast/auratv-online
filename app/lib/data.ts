@@ -48,7 +48,7 @@ export async function getSetup() {
     return setup.default;
   } catch (error) {
     return {
-      sitename: "VisionPro",
+      sitename: "Streamku",
       favicon_url: "/favicon.ico",
       logo_url: ""
     };

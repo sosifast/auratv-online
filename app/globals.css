@@ -1,54 +1,25 @@
 @import "tailwindcss";
 
-:root {
-  --background: #f5f5f7;
-  --foreground: #111827;
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background-color: var(--background);
-  color: var(--foreground);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  overflow-x: hidden;
+  background-color: #f3f4f6;
+  margin: 0;
+  padding: 0;
 }
 
-/* Hide scrollbar for Chrome, Safari and Opera */
-.scrollbar-hide::-webkit-scrollbar {
+.hide-scrollbar::-webkit-scrollbar {
   display: none;
 }
 
-/* Hide scrollbar for IE, Edge and Firefox */
-.scrollbar-hide {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(10px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.animate-fade-in {
-  animation: fadeIn 0.5s ease forwards;
-}
-
-/* Video Player Styling */
-.video-js {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  border-radius: 2rem;
-  overflow: hidden;
-  box-shadow: 0 20px 40px -15px rgba(0,0,0,0.15);
-}
-
-.vjs-big-play-button {
-  background-color: #2563eb !important;
-  border: none !important;
-  border-radius: 50% !important;
-  width: 80px !important;
-  height: 80px !important;
-  line-height: 80px !important;
-  top: 50% !important;
-  left: 50% !important;
-  transform: translate(-50%, -50%) !important;
+.bottom-nav-shadow {
+  box-shadow: 0 -4px 20px -5px rgba(0, 0, 0, 0.05);
 }

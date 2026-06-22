@@ -1,111 +1,213 @@
-import { getStreams, getCategories, getSliders } from './lib/data';
-import { getDictionary } from './lib/dictionary';
-import { cookies } from 'next/headers';
-import Link from 'next/link';
-import HeroSlider from './components/HeroSlider';
-import SearchBar from './components/SearchBar';
-import LanguageSwitcher from './components/LanguageSwitcher';
-import { Popunder, NativeBanner } from './components/Ads';
-import { PlayCircle, Play, Plus, ChevronRight, Users, Flame, Rocket, Skull, Smile, Heart, Wand2, Eye, Bell, Search, MonitorPlay } from 'lucide-react';
+'use client';
 
-export default async function Home({ searchParams }: { searchParams: Promise<{ category?: string, q?: string, page?: string }> }) {
-  const resolvedSearchParams = await searchParams;
-  const activeCategorySlug = resolvedSearchParams.category || 'Semua';
+import React, { useState, useEffect } from 'react';
+import {
+  PlayCircle, Home, MonitorPlay, Film, Search, Bell, Play, Plus,
+  ChevronRight, Users, Flame, Rocket, Skull, Smile, Heart, Wand2, Eye,
+  Clapperboard
+} from 'lucide-react';
+import BottomMenu from './component/menu';
 
-  const cookieStore = await cookies();
-  const locale = cookieStore.get("locale")?.value || "id";
-  const dict = getDictionary(locale);
+export default function App() {
+  const [currentSlide, setCurrentSlide] = useState(0);
 
-  const [streams, categories, sliders] = await Promise.all([
-    getStreams(),
-    getCategories(),
-    getSliders()
-  ]);
-
-  const activeCategory = categories.find((c: any) => c.slug === activeCategorySlug);
-  const searchQuery = resolvedSearchParams.q?.toLowerCase() || '';
-
-  const filteredChannels = streams.filter((channel: any) => {
-    const matchesCategory = activeCategorySlug === 'Semua' || Number(channel.id_category) === Number(activeCategory?.id);
-    const matchesSearch = !searchQuery || channel.name.toLowerCase().includes(searchQuery);
-    return matchesCategory && matchesSearch;
-  });
-
-  const itemsPerPage = 16;
-  const totalPages = Math.max(1, Math.ceil(filteredChannels.length / itemsPerPage));
-  const requestedPage = Number.parseInt(resolvedSearchParams.page || '1', 10);
-  const currentPage = Number.isNaN(requestedPage) ? 1 : Math.min(Math.max(requestedPage, 1), totalPages);
-  const paginatedChannels = filteredChannels.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-  // Static Genres matching user design, could be mapped dynamically if needed
-  const genres = [
-    { name: 'Action', color: 'from-orange-500 to-red-600', icon: Flame },
-    { name: 'Sci-Fi', color: 'from-cyan-500 to-blue-600', icon: Rocket },
-    { name: 'Horror', color: 'from-gray-600 to-gray-900', icon: Skull },
-    { name: 'Comedy', color: 'from-yellow-400 to-amber-600', icon: Smile },
-    { name: 'Romance', color: 'from-pink-400 to-rose-600', icon: Heart },
-    { name: 'Fantasy', color: 'from-violet-500 to-purple-700', icon: Wand2 },
-    { name: 'Thriller', color: 'from-emerald-500 to-teal-700', icon: Eye }
+  // Data for the Hero Slider
+  const slideData = [
+    {
+      img: "https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=800&q=80",
+      title: "Cyber Dawn",
+      desc: "When the world is ruled by AI, a group of rebels must find the original source code before human civilization is wiped out forever.",
+      genre: "Sci-Fi"
+    },
+    {
+      img: "https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?auto=format&fit=crop&w=800&q=80",
+      title: "Neon Dreams",
+      desc: "A detective's journey through a futuristic metropolis to uncover the biggest conspiracy of 2140.",
+      genre: "Action"
+    },
+    {
+      img: "https://images.unsplash.com/photo-1509347528160-9a9e33742cdb?auto=format&fit=crop&w=800&q=80",
+      title: "The Outlanders",
+      desc: "Surviving on an alien planet has never been this easy. Join the epic adventure across the galaxy.",
+      genre: "Adventure"
+    }
   ];
 
+  // Auto Slider Effect
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slideData.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, [slideData.length]);
+
+  // Static Data
+  const genres = [
+    { name: 'Action', color: 'from-orange-400 to-red-500', icon: Flame },
+    { name: 'Sci-Fi', color: 'from-cyan-400 to-blue-500', icon: Rocket },
+    { name: 'Horror', color: 'from-gray-700 to-gray-900', icon: Skull },
+    { name: 'Comedy', color: 'from-yellow-400 to-amber-500', icon: Smile },
+    { name: 'Romance', color: 'from-pink-400 to-rose-500', icon: Heart },
+    { name: 'Fantasy', color: 'from-violet-400 to-purple-600', icon: Wand2 },
+    { name: 'Thriller', color: 'from-emerald-400 to-teal-600', icon: Eye }
+  ];
+
+  const recommendations = [
+    { title: "The Lost City", img: "https://images.unsplash.com/photo-1536440136628-849c177e76a1?auto=format&fit=crop&w=300&q=80", isNew: true },
+    { title: "Neon Dreams", img: "https://images.unsplash.com/photo-1616530940355-351fabd9524b?auto=format&fit=crop&w=300&q=80", isNew: false },
+    { title: "Dark Forest", img: "https://images.unsplash.com/photo-1574267432553-4b4628081524?auto=format&fit=crop&w=300&q=80", isNew: true },
+    { title: "Ocean's Echo", img: "https://images.unsplash.com/photo-1502899576159-f224dc2349fa?auto=format&fit=crop&w=300&q=80", isNew: false },
+    { title: "Space Walk", img: "https://images.unsplash.com/photo-1604928141064-207cea6f5822?auto=format&fit=crop&w=300&q=80", isNew: false },
+    { title: "Mystery Room", img: "https://images.unsplash.com/photo-1535016120720-40c746a46b14?auto=format&fit=crop&w=300&q=80", isNew: false },
+    { title: "Cyber Core", img: "https://images.unsplash.com/photo-1526304640581-d334cdbbf45e?auto=format&fit=crop&w=300&q=80", isNew: true },
+    { title: "Silent Hills", img: "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?auto=format&fit=crop&w=300&q=80", isNew: false },
+    { title: "Desert Rose", img: "https://images.unsplash.com/photo-1509316785289-025f5b846b35?auto=format&fit=crop&w=300&q=80", isNew: false },
+    { title: "City Lights", img: "https://images.unsplash.com/photo-1449844908441-8829872d2607?auto=format&fit=crop&w=300&q=80", isNew: true }
+  ];
+
+  const liveChannels = [
+    { title: "Global News", views: "12.5K", img: "https://images.unsplash.com/photo-1616469829581-73993eb86b02?auto=format&fit=crop&w=400&q=80" },
+    { title: "Sports Arena", views: "8.2K", img: "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?auto=format&fit=crop&w=400&q=80" },
+    { title: "Hit Music", views: "5.1K", img: "https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=400&q=80" },
+    { title: "Daily Update", views: "3.4K", img: "https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=400&q=80" }
+  ];
+
+  const categoriesData = [
+    { title: "K-Drama Hits", color: "from-pink-400 to-rose-500", icon: Heart },
+    { title: "Anime Universe", color: "from-violet-400 to-purple-600", icon: Wand2 },
+    { title: "Kids & Family", color: "from-yellow-400 to-amber-500", icon: Smile },
+    { title: "Documentary", color: "from-emerald-400 to-teal-600", icon: Eye }
+  ];
+
+  // Fungsi khusus agar bisa "klik-dan-geser" (drag to scroll) di Desktop
+  const dragHandlers = {
+    onMouseDown: (e: any) => {
+      const ele = e.currentTarget;
+      ele.dataset.isDown = 'true';
+      ele.dataset.startX = e.pageX - ele.offsetLeft;
+      ele.dataset.scrollLeft = ele.scrollLeft;
+    },
+    onMouseLeave: (e: any) => {
+      e.currentTarget.dataset.isDown = 'false';
+    },
+    onMouseUp: (e: any) => {
+      e.currentTarget.dataset.isDown = 'false';
+    },
+    onMouseMove: (e: any) => {
+      const ele = e.currentTarget;
+      if (ele.dataset.isDown !== 'true') return;
+      e.preventDefault();
+      const x = e.pageX - ele.offsetLeft;
+      const startX = parseFloat(ele.dataset.startX);
+      const scrollLeft = parseFloat(ele.dataset.scrollLeft);
+      const walk = (x - startX) * 2; // Angka 2 untuk mempercepat laju geseran
+      ele.scrollLeft = scrollLeft - walk;
+    }
+  };
+
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
-        body { font-family: 'Outfit', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .hide-scrollbar::-webkit-scrollbar { display: none; }
-        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-      `}</style>
-      <Popunder />
-      
-      <main className="flex-1 h-full overflow-y-auto overflow-x-hidden hide-scrollbar relative pb-20 md:pb-0">
-        
-        {/* TOP HEADER (Mobile Only & Tablet Search) */}
-        <header className="absolute top-0 left-0 w-full z-40 px-4 md:px-8 py-4 flex justify-between items-center bg-gradient-to-b from-[#0B0C10]/80 to-transparent">
-          <div className="md:hidden flex items-center gap-2">
-            <PlayCircle className="w-8 h-8 text-[#E50914]" />
-            <span className="text-xl font-bold tracking-wider drop-shadow-md">VERSE</span>
-          </div>
-          
-          <div className="hidden md:block flex-1"></div>
+    // Main wrapper: Removed max-w-2xl and mx-auto so it spans the entire screen width
+    <div className="w-full h-screen overflow-hidden antialiased bg-gray-50 text-gray-900 font-sans selection:bg-[#E50914]/30 flex flex-col relative">
 
-          <div className="flex items-center gap-4">
-            <div className="hidden md:block w-72">
-              <SearchBar placeholder={dict.common.search || "Search..."} />
+
+
+      {/* TOP HEADER (Fixed on top, transparent to solid blur) */}
+      <header className="absolute top-0 left-0 w-full z-40 px-5 md:px-10 py-4 flex justify-between items-center bg-gradient-to-b from-black/60 to-transparent">
+        <div className="flex items-center gap-2">
+          <PlayCircle className="w-8 h-8 text-[#E50914] bg-white rounded-full p-0.5" />
+          <span className="text-xl font-bold tracking-wider text-white drop-shadow-md">VERSE</span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button className="p-2 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/30 transition-colors">
+            <Search className="w-5 h-5 text-white" />
+          </button>
+          <button className="p-2 rounded-full bg-white/20 backdrop-blur-md hover:bg-white/30 transition-colors">
+            <Bell className="w-5 h-5 text-white" />
+          </button>
+        </div>
+      </header>
+
+      {/* MAIN SCROLLABLE CONTENT */}
+      {/* Padding bottom ensures content isn't hidden behind the fixed bottom nav */}
+      <main className="flex-1 overflow-y-auto overflow-x-hidden hide-scrollbar pb-24 w-full bg-white">
+
+        {/* HERO SLIDER (Responsive height and layout) */}
+        <section className="relative w-full h-[60vh] md:h-[70vh] lg:h-[80vh] bg-gray-900 flex items-end overflow-hidden">
+
+          {/* Slider Track */}
+          <div
+            className="absolute inset-0 w-full h-full flex transition-transform duration-700 ease-in-out"
+            style={{ transform: `translateX(-${currentSlide * 100}%)` }}
+          >
+            {slideData.map((slide, index) => (
+              <div key={index} className="w-full h-full flex-shrink-0 relative">
+                <img src={slide.img} className="w-full h-full object-cover" alt={slide.title} />
+                {/* Gradient for text readability - adapted for light theme by fading to white at the very bottom */}
+                <div className="absolute inset-0 bg-gradient-to-t from-white via-black/50 to-black/20"></div>
+              </div>
+            ))}
+          </div>
+
+          {/* Hero Content */}
+          <div className="relative z-10 px-5 md:px-10 pb-8 md:pb-12 w-full md:w-2/3 lg:w-1/2">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="px-2 py-1 text-[10px] md:text-xs font-bold bg-[#E50914] text-white rounded uppercase tracking-wider">New</span>
+              <span className="text-xs md:text-sm font-medium text-gray-200">{slideData[currentSlide].genre} • 2026</span>
             </div>
-            <button className="p-2 rounded-full bg-black/20 backdrop-blur-md hover:bg-white/20 transition-colors md:hidden">
-              <Search className="w-5 h-5 text-white" />
-            </button>
-            <LanguageSwitcher />
-            <button className="p-2 rounded-full bg-black/20 backdrop-blur-md hover:bg-white/20 transition-colors">
-              <Bell className="w-5 h-5 text-white" />
-            </button>
+
+            <div className="transition-opacity duration-300">
+              <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold mb-3 leading-tight text-white drop-shadow-md">
+                {slideData[currentSlide].title}
+              </h1>
+              <p className="text-xs sm:text-base text-gray-200 mb-6 line-clamp-2 md:line-clamp-3 drop-shadow-sm w-[90%] md:w-full">
+                {slideData[currentSlide].desc}
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3 md:gap-5">
+              <button className="flex-1 md:flex-none md:px-8 flex justify-center items-center gap-2 bg-[#E50914] text-white px-4 py-3 rounded-xl md:rounded-full font-bold shadow-lg shadow-[#E50914]/30 active:scale-95 hover:bg-red-700 transition-all">
+                <Play className="w-5 h-5 md:w-6 md:h-6 fill-white" />
+                Play Now
+              </button>
+              <button className="flex-1 md:flex-none md:px-8 flex justify-center items-center gap-2 bg-white/20 backdrop-blur-md text-white border border-white/20 px-4 py-3 rounded-xl md:rounded-full font-bold active:scale-95 hover:bg-white/30 transition-all shadow-md">
+                <Plus className="w-5 h-5 md:w-6 md:h-6" />
+                My List
+              </button>
+            </div>
           </div>
-        </header>
 
-        {/* HERO SLIDER */}
-        <HeroSlider sliders={sliders} />
+          {/* Slider Indicators */}
+          <div className="absolute top-24 md:top-auto md:bottom-10 right-5 md:right-10 flex flex-col md:flex-row gap-1.5 md:gap-2 z-20">
+            {slideData.map((_, idx) => (
+              <div
+                key={idx}
+                className={`transition-all duration-300 rounded-full ${idx === currentSlide ? 'bg-white h-4 w-1 md:h-2 md:w-6' : 'bg-white/40 h-1.5 w-1 md:h-2 md:w-2'}`}
+              />
+            ))}
+          </div>
+        </section>
 
-        <div className="px-4 md:px-12 -mt-4 relative z-20 pb-10 space-y-10">
-          
+        <div className="px-5 md:px-10 pt-8 space-y-12 md:space-y-16 w-full bg-white">
+
           {/* GENRE SECTION */}
-          <section>
-            <div className="flex justify-between items-end mb-4">
-              <h2 className="text-xl md:text-2xl font-bold tracking-wide">Explore Genres</h2>
-            </div>
-            
-            <div className="flex overflow-x-auto gap-3 md:gap-4 snap-x snap-mandatory hide-scrollbar pb-4 -mx-4 px-4 md:mx-0 md:px-0">
+          <section className="w-full">
+            <h2 className="text-lg md:text-2xl font-bold tracking-tight text-gray-900 mb-4 md:mb-6">Explore Genres</h2>
+
+            <div
+              className="flex overflow-x-auto gap-3 md:gap-5 hide-scrollbar pb-6 md:pb-8 -mx-5 md:-mx-10 px-5 md:px-10 cursor-grab active:cursor-grabbing select-none"
+              {...dragHandlers}
+            >
               {genres.map((genre, idx) => {
                 const Icon = genre.icon;
                 return (
-                  <div key={idx} className="snap-start shrink-0 w-32 md:w-40 h-16 md:h-20 group cursor-pointer">
-                    <div className={`w-full h-full rounded-xl bg-gradient-to-br ${genre.color} p-[1px] shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-[#E50914]/20 group-active:scale-95`}>
-                      <div className="w-full h-full bg-[#0B0C10]/40 backdrop-blur-sm rounded-[11px] flex items-center justify-center relative overflow-hidden transition-colors duration-300 group-hover:bg-[#0B0C10]/10">
-                        <Icon className="absolute -right-2 -bottom-2 w-12 h-12 text-white opacity-10 group-hover:opacity-20 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500" />
-                        <div className="relative z-10">
-                          <span className="font-bold text-sm md:text-base text-white tracking-wide drop-shadow-md">{genre.name}</span>
-                        </div>
+                  <div key={idx} className="shrink-0 w-28 md:w-40 h-16 md:h-20 relative rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${genre.color} opacity-10 pointer-events-none`}></div>
+                    <div className="w-full h-full flex items-center p-3 relative pointer-events-none">
+                      <div className="flex-1 relative z-10">
+                        <span className="font-bold text-sm md:text-base text-gray-800">{genre.name}</span>
                       </div>
+                      <Icon className="absolute -right-2 -bottom-2 w-10 h-10 md:w-14 md:h-14 text-gray-400 opacity-20" />
                     </div>
                   </div>
                 )
@@ -113,122 +215,96 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ c
             </div>
           </section>
 
-          <NativeBanner />
-
           {/* REKOMENDASI SECTION */}
-          <section>
-            <div className="flex justify-between items-end mb-4">
-              <h2 className="text-xl md:text-2xl font-bold tracking-wide">{dict.common.recommendations || "Recommended for You"}</h2>
-              <a href="#" className="text-[#E50914] text-sm font-medium hover:underline flex items-center">
-                See All <ChevronRight className="w-4 h-4" />
+          <section className="w-full">
+            <div className="flex justify-between items-end mb-4 md:mb-6">
+              <h2 className="text-lg md:text-2xl font-bold tracking-tight text-gray-900">Recommended</h2>
+              <a href="#" className="text-[#E50914] text-xs md:text-sm font-semibold flex items-center hover:underline">
+                See All <ChevronRight className="w-3 h-3 md:w-4 md:h-4 ml-0.5" />
               </a>
             </div>
-            
-            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory hide-scrollbar pb-4 -mx-4 px-4 md:mx-0 md:px-0">
-              {streams.slice(4, 10).map((channel: any, idx: number) => (
-                <Link href={`/${channel.slug}`} key={channel.id} className="snap-start shrink-0 w-36 md:w-48 lg:w-56 group relative cursor-pointer block">
-                  <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden shadow-lg transition-transform duration-300 group-hover:scale-105 group-hover:ring-2 ring-[#E50914]">
-                    <img src={channel.image_url} alt={channel.name} className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-70 bg-[#1F2833]" />
-                    
-                    {/* Play Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                      <div className="bg-[#E50914] rounded-full p-3 shadow-lg shadow-[#E50914]/50">
-                        <Play className="w-6 h-6 fill-white text-white" />
-                      </div>
-                    </div>
-                    
+
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3 md:gap-4 pb-4 md:pb-6">
+              {recommendations.map((item, idx) => (
+                <div key={idx} className="relative cursor-pointer group w-full">
+                  <div className="relative w-full aspect-[2/3] rounded-xl overflow-hidden shadow-sm bg-gray-200 group-hover:shadow-lg transition-all">
+                    <img src={item.img} alt={item.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+
                     {/* Badge */}
-                    {idx === 0 && (
-                      <div className="absolute top-2 left-2 bg-[#E50914] text-white text-[10px] font-bold px-2 py-1 rounded">
-                        New
+                    {item.isNew && (
+                      <div className="absolute top-2 left-2 bg-[#E50914] text-white text-[9px] md:text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                        NEW
                       </div>
                     )}
                   </div>
-                  <h3 className="mt-2 text-sm md:text-base font-medium truncate">{channel.name}</h3>
-                </Link>
+                  <h3 className="mt-2 text-xs md:text-sm font-semibold text-gray-800 truncate">{item.title}</h3>
+                </div>
               ))}
             </div>
           </section>
 
           {/* LIVE TV SECTION */}
-          <section>
-            <div className="flex justify-between items-end mb-4">
-              <h2 className="text-xl md:text-2xl font-bold tracking-wide">{dict.common.live || "Live Channels"}</h2>
-            </div>
-            
-            <div className="flex overflow-x-auto gap-4 snap-x snap-mandatory hide-scrollbar pb-4 -mx-4 px-4 md:mx-0 md:px-0">
-              {paginatedChannels.slice(0, 8).map((channel: any) => (
-                <Link href={`/${channel.slug}`} key={channel.id} className="snap-start shrink-0 w-56 md:w-72 group relative cursor-pointer block">
-                  <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-lg transition-all duration-300 group-hover:scale-105 ring-1 ring-white/10 group-hover:ring-[#E50914]">
-                    <img src={channel.image_url} alt={channel.name} className="w-full h-full object-cover bg-[#1F2833]" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent"></div>
-                    
+          <section className="w-full">
+            <h2 className="text-lg md:text-2xl font-bold tracking-tight text-gray-900 mb-4 md:mb-6">Live TV</h2>
+
+            <div
+              className="flex overflow-x-auto gap-3 md:gap-5 hide-scrollbar pb-6 md:pb-8 -mx-5 md:-mx-10 px-5 md:px-10 cursor-grab active:cursor-grabbing select-none"
+              {...dragHandlers}
+            >
+              {liveChannels.map((channel, idx) => (
+                <div key={idx} className="shrink-0 w-56 md:w-80 relative cursor-pointer group">
+                  <div className="relative w-full aspect-video rounded-xl overflow-hidden shadow-sm bg-gray-200 border border-gray-100 group-hover:shadow-md transition-all pointer-events-none">
+                    <img src={channel.img} alt={channel.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent"></div>
+
                     {/* Live Badge */}
-                    <div className="absolute top-2 left-2 flex items-center gap-1.5 bg-[#E50914] text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg">
+                    <div className="absolute top-2 left-2 flex items-center gap-1 bg-[#E50914] text-white text-[9px] md:text-xs font-bold px-1.5 py-0.5 rounded shadow-sm">
                       <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
                       LIVE
                     </div>
 
                     {/* Viewers */}
-                    <div className="absolute top-2 right-2 bg-black/60 backdrop-blur-sm text-white text-[10px] font-medium px-2 py-1 rounded flex items-center gap-1">
-                      <Users className="w-3 h-3" /> {Math.floor(Math.random() * 900) + 10}K
+                    <div className="absolute top-2 right-2 bg-black/50 backdrop-blur-sm text-white text-[9px] md:text-xs font-medium px-1.5 py-0.5 rounded flex items-center gap-1">
+                      <Users className="w-2.5 h-2.5 md:w-3 md:h-3" /> {channel.views}
                     </div>
-                    
-                    <div className="absolute bottom-3 left-3 right-3">
-                      <h3 className="text-sm md:text-base font-bold text-white truncate">{channel.name}</h3>
-                      <p className="text-[10px] md:text-xs text-[#E50914] font-medium truncate mt-0.5">Live Now</p>
-                    </div>
-                    
-                    {/* Play Icon Overlay */}
-                    <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/40">
-                      <div className="bg-[#E50914] rounded-full p-3 shadow-lg shadow-[#E50914]/50 scale-90 group-hover:scale-100 transition-transform">
-                        <Play className="w-6 h-6 fill-white text-white" />
-                      </div>
+
+                    <div className="absolute bottom-2 md:bottom-4 left-2 md:left-4 right-2 md:right-4">
+                      <h3 className="text-sm md:text-lg font-bold text-white truncate drop-shadow-md">{channel.title}</h3>
+                      <p className="text-[9px] md:text-xs text-gray-300 font-medium truncate mt-0.5">Streaming Now</p>
                     </div>
                   </div>
-                </Link>
+                </div>
               ))}
             </div>
           </section>
 
-          <NativeBanner />
-
           {/* CATEGORIES SECTION */}
-          <section>
-            <div className="flex justify-between items-end mb-4">
-              <h2 className="text-xl md:text-2xl font-bold tracking-wide">Categories</h2>
-            </div>
-            
-            <div className="flex overflow-x-auto gap-3 md:gap-4 snap-x snap-mandatory hide-scrollbar pb-4 -mx-4 px-4 md:mx-0 md:px-0">
-              {categories.slice(0, 8).map((cat: any, idx: number) => {
-                const colors = [
-                  'from-blue-500 to-indigo-600',
-                  'from-purple-500 to-fuchsia-600',
-                  'from-emerald-500 to-teal-600',
-                  'from-orange-500 to-red-600',
-                  'from-pink-500 to-rose-600',
-                  'from-cyan-500 to-blue-600',
-                  'from-yellow-500 to-amber-600',
-                  'from-violet-500 to-purple-600',
-                ];
-                const color = colors[idx % colors.length];
+          <section className="w-full pb-6 md:pb-10">
+            <h2 className="text-lg md:text-2xl font-bold tracking-tight text-gray-900 mb-3 md:mb-5">Categories</h2>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-5">
+              {categoriesData.map((cat, idx) => {
+                const Icon = cat.icon;
                 return (
-                  <Link href={`/?category=${cat.slug}`} key={cat.id} className="snap-start shrink-0 w-32 md:w-40 h-16 md:h-20 group cursor-pointer block">
-                    <div className={`w-full h-full rounded-xl bg-gradient-to-br ${color} p-[1px] shadow-lg transition-all duration-300 group-hover:scale-105 group-hover:shadow-[#E50914]/20 group-active:scale-95`}>
-                      <div className="w-full h-full bg-[#0B0C10]/40 backdrop-blur-sm rounded-[11px] flex items-center justify-center relative overflow-hidden transition-colors duration-300 group-hover:bg-[#0B0C10]/10">
-                        <MonitorPlay className="absolute -right-2 -bottom-2 w-12 h-12 text-white opacity-10 group-hover:opacity-20 group-hover:scale-125 group-hover:-rotate-12 transition-all duration-500" />
-                        <div className="relative z-10 px-2 text-center">
-                          <span className="font-bold text-sm md:text-base text-white tracking-wide drop-shadow-md line-clamp-1">{cat.name}</span>
-                        </div>
+                  <div key={idx} className="w-full h-16 md:h-20 relative rounded-xl overflow-hidden shadow-sm border border-gray-100 cursor-pointer hover:shadow-md transition-all">
+                    <div className={`absolute inset-0 bg-gradient-to-br ${cat.color} opacity-10 pointer-events-none`}></div>
+                    <div className="w-full h-full flex items-center p-3 relative pointer-events-none">
+                      <div className="flex-1 relative z-10">
+                        <span className="font-bold text-sm md:text-base text-gray-800">{cat.title}</span>
                       </div>
+                      <Icon className="absolute -right-2 -bottom-2 w-10 h-10 md:w-14 md:h-14 text-gray-400 opacity-20" />
                     </div>
-                  </Link>
-                );
+                  </div>
+                )
               })}
             </div>
           </section>
         </div>
       </main>
-    </>
+
+      {/* BOTTOM NAVIGATION (Fixed at bottom - full width) */}
+      <BottomMenu />
+
+    </div>
   );
 }

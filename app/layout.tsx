@@ -1,77 +1,33 @@
-import type { Metadata } from "next";
-import { Inter } from "next/font/google";
-import { cookies } from "next/headers";
-import "./globals.css";
-import { Suspense } from "react";
-import Navbar from "./components/Navbar";
-import { I18nProvider } from "./components/I18nProvider";
-import { CSPostHogProvider } from "./components/PostHogProvider";
-import PostHogPageView from "./components/PostHogPageView";
-import { getSetup } from "./lib/data";
+import type { Metadata, Viewport } from 'next';
+import { Outfit } from 'next/font/google';
+import './globals.css';
 
-const inter = Inter({ subsets: ["latin"] });
+const outfit = Outfit({
+  subsets: ['latin'],
+  weight: ['300', '400', '500', '600', '700', '800'],
+  display: 'swap',
+  variable: '--font-outfit',
+});
 
-export async function generateMetadata(): Promise<Metadata> {
-  const setup = await getSetup();
-  const title = "Free live streaming | Live TV Fifa World Cup 2026";
-  const description = `Watch FIFA World Cup 2026 live and the most complete Live TV online with free HD quality. Enjoy premium football streaming access on ${setup.sitename}.`;
-  
-  return {
-    title,
-    description,
-    keywords: ["live streaming", "fifa world cup 2026", "watch tv online", "free football streaming", setup.sitename.toLowerCase(), "digital tv", "live sports"],
-    openGraph: {
-      title,
-      description,
-      images: [
-        {
-          url: "/seo/streamku.jpg",
-          width: 1200,
-          height: 630,
-          alt: `${setup.sitename} Live Streaming`,
-        },
-      ],
-      type: "website",
-    },
-    twitter: {
-      card: "summary_large_image",
-      title,
-      description,
-      images: ["/seo/streamku.jpg"],
-    },
-    icons: {
-      icon: setup.favicon_url,
-      shortcut: setup.favicon_url,
-      apple: setup.favicon_url,
-    }
-  };
-}
+export const metadata: Metadata = {
+  title: 'Free live streaming | Live TV Fifa World Cup 2026 - Streamku',
+  description: 'Watch the latest movies, TV shows, and live channels on Streamku, your premium streaming destination.',
+};
 
-export default async function RootLayout({
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+};
+
+export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
-  const cookieStore = await cookies();
-  const locale = cookieStore.get("locale")?.value || "en";
-
-  const setup = await getSetup();
-
+}) {
   return (
-    <html lang={locale}>
-      <body className={inter.className}>
-        <CSPostHogProvider>
-          <I18nProvider initialLocale={locale}>
-            <Suspense>
-              <PostHogPageView />
-            </Suspense>
-            <div className="flex h-screen overflow-hidden antialiased bg-[#0B0C10] text-white font-sans selection:bg-[#E50914]/30">
-              <Navbar setup={setup} />
-              {children}
-            </div>
-          </I18nProvider>
-        </CSPostHogProvider>
-      </body>
+    <html lang="en" className={outfit.variable}>
+      <body className={outfit.className}>{children}</body>
     </html>
   );
 }
