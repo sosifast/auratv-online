@@ -2,7 +2,7 @@ import React from 'react';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { ArrowLeft, Award } from 'lucide-react';
-import { getMovieById, getMovieBySlug } from '@/app/lib/api-movie/data';
+import { getMovieById, getMovieBySlug, getMovieStreamLinks } from '@/app/lib/api-movie/data';
 import MoviePlayer from './MoviePlayer';
 
 export const dynamic = 'force-dynamic';
@@ -66,5 +66,22 @@ export default async function MoviePlayPage({ params }: PlayPageProps) {
     );
   }
 
-  return <MoviePlayer movie={movie} />;
+  const streamLinks = await getMovieStreamLinks();
+  const matchingStream = streamLinks.find(
+    (link) => link.movie_name === movie.id.toString()
+  );
+
+  const directLinks: string[] = [];
+  if (matchingStream) {
+    const streamObj = matchingStream as any;
+    if (streamObj.link) directLinks.push(streamObj.link);
+    for (let i = 1; i <= 20; i++) {
+      const key = `link_${i}`;
+      if (streamObj[key]) {
+        directLinks.push(streamObj[key]);
+      }
+    }
+  }
+
+  return <MoviePlayer movie={movie} directLinks={directLinks} />;
 }

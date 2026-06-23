@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { Film, Search, Star, PlayCircle, Loader2, X, Clapperboard } from 'lucide-react';
 import BottomMenu from '@/app/component/menu';
-import { Movie, MovieGenre } from '@/app/lib/api-movie/data';
+import { Movie, MovieGenre } from '@/app/lib/api-movie/types';
 
 interface MovieExplorerProps {
   initialMovies: Movie[];
@@ -17,7 +17,20 @@ export default function MovieExplorer({
   initialGenres,
   initialHasNextPage,
 }: MovieExplorerProps) {
-  const [movies, setMovies] = useState<Movie[]>(initialMovies);
+  const [movies, setMovies] = useState<Movie[]>(() => {
+    const unique: Movie[] = [];
+    const seen = new Set<number>();
+    for (const m of initialMovies) {
+      if (m && m.id) {
+        const idNum = Number(m.id);
+        if (!seen.has(idNum)) {
+          seen.add(idNum);
+          unique.push({ ...m, id: idNum });
+        }
+      }
+    }
+    return unique;
+  });
   const [genres] = useState<MovieGenre[]>(initialGenres);
   const [activeGenre, setActiveGenre] = useState<number | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -68,7 +81,20 @@ export default function MovieExplorer({
         if (!res.ok) throw new Error("Gagal mengambil data");
         const data = await res.json();
         
-        setMovies(data.movies || []);
+        const uniqueMovies: Movie[] = [];
+        const seenIds = new Set<number>();
+        if (data.movies) {
+          for (const m of data.movies) {
+            if (m && m.id) {
+              const idNum = Number(m.id);
+              if (!seenIds.has(idNum)) {
+                seenIds.add(idNum);
+                uniqueMovies.push({ ...m, id: idNum });
+              }
+            }
+          }
+        }
+        setMovies(uniqueMovies);
         setPage(1);
         setHasNextPage(data.pagination?.hasNextPage ?? false);
       } catch (error) {
@@ -123,7 +149,21 @@ export default function MovieExplorer({
       const data = await res.json();
       
       if (data.movies && data.movies.length > 0) {
-        setMovies((prev) => [...prev, ...data.movies]);
+        setMovies((prev) => {
+          const combined = [...prev, ...data.movies];
+          const unique: Movie[] = [];
+          const seen = new Set<number>();
+          for (const m of combined) {
+            if (m && m.id) {
+              const idNum = Number(m.id);
+              if (!seen.has(idNum)) {
+                seen.add(idNum);
+                unique.push({ ...m, id: idNum });
+              }
+            }
+          }
+          return unique;
+        });
         setPage(nextPage);
         setHasNextPage(data.pagination?.hasNextPage ?? false);
       } else {
